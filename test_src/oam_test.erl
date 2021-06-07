@@ -33,9 +33,9 @@ start()->
     ok=setup(),
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
- %   io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
- %   ok=pass_0(),
- %   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_0(),
+   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
  %   io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
  %   ok=pass_1(),
@@ -74,7 +74,9 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_0()->
-
+    {error,[eexists,"glurk"]}=oam:create_cluster("glurk"),
+    [{"test_1",2,["c0","c1"],"test_1_cookie",[],false}]=oam:create_cluster("test_1"),
+    
     ok.
 
 %% --------------------------------------------------------------------

@@ -19,9 +19,7 @@
 %% --------------------------------------------------------------------
  
 %% --------------------------------------------------------------------
--define(HostFile,"glurk").
--define(HostConfigDir,"g").
--define(GitHostConfigCmd,"g").
+
 %% --------------------------------------------------------------------
 %% Key Data structures
 %% 
@@ -171,7 +169,7 @@ handle_call({status_hosts},_From,State) ->
     {reply, Reply, State};
 
 handle_call({create_cluster,ClusterName},_From,State) ->
-    Reply=ClusterName,
+    Reply=rpc:call(node(),oam_cluster,create,[ClusterName]),
     {reply, Reply, State};
 
 handle_call({ping},_From,State) ->
