@@ -26,7 +26,7 @@
 %% Key Data structures
 %% 
 %% --------------------------------------------------------------------
--record(state, {cookie,cluster_name}).
+-record(state, {running_hosts,missing_hosts}).
 
 
 
@@ -45,6 +45,16 @@
 
 
 % OaM related
+% Admin
+
+-export([
+	 status_hosts/0,
+	 cluster_info/0,
+	 host_info/0,
+	 catalog_info/0
+	]).
+
+% Operate
 -export([
 	 create_cluster/1,
 	 create_cluster/4
@@ -78,6 +88,16 @@ start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 stop()-> gen_server:call(?MODULE, {stop},infinity).
 
 
+%%  Admin 
+status_hosts()->
+    gen_server:call(?MODULE, {status_hosts},infinity).
+cluster_info()->
+    gen_server:call(?MODULE, {cluster_info},infinity).   
+host_info()->
+    gen_server:call(?MODULE, {host_info},infinity).  
+catalog_info()->
+    gen_server:call(?MODULE, {catalog_info},infinity).  
+
 %%---------------------------------------------------------------
 create_cluster(ClusterName,NumControllers,Hosts,Cookie)->
     gen_server:call(?MODULE, {create_cluster,ClusterName,Cookie,Hosts,NumControllers},infinity).
@@ -87,6 +107,8 @@ create_cluster(ConfigFile)->
     gen_server:call(?MODULE, {create_cluster,ConfigFile},infinity).
 delete_cluster(Name)->
     gen_server:call(?MODULE, {delete,Name},infinity).    
+
+
 
 %%---------------------------------------------------------------
 
@@ -115,8 +137,9 @@ init([]) ->
     ok=application:start(support),
     application:set_env([{etcd,[{is_leader,true}]}]),
     ok=application:start(etcd),
-    
-    {ok, #state{}}.
+    {ok,_}=host_controller:start(),
+    [{running,Running},{missing,Missing}]=host_controller:status_hosts(),
+    {ok, #state{running_hosts=Running,missing_hosts=Missing}}.
     
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -129,6 +152,23 @@ init([]) ->
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
 
+
+handle_call({cluster_info},_From,State) ->
+    Reply=etcd:cluster_info(),
+    {reply, Reply, State};
+
+handle_call({host_info},_From,State) ->
+    Reply=etcd:host_info(),
+    {reply, Reply, State};
+
+handle_call({catalog_info},_From,State) ->
+    Reply=etcd:catalog_info(),
+    {reply, Reply, State};
+
+
+handle_call({status_hosts},_From,State) ->
+    Reply=host_controller:status_hosts(),
+    {reply, Reply, State};
 
 handle_call({create_cluster,ClusterName},_From,State) ->
     Reply=ClusterName,

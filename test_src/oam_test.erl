@@ -151,7 +151,7 @@ setup()->
 
 cleanup()->
   
-    application:stop(oam),
+%    application:stop(oam),
     ok.
 %% --------------------------------------------------------------------
 %% Function:start/0 
