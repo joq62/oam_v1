@@ -11,7 +11,7 @@
 %% --------------------------------------------------------------------
 -include_lib("eunit/include/eunit.hrl").
 %% --------------------------------------------------------------------
--define(APP,controller).
+-define(APP,oam).
 %% External exports
 -export([start/0]).
 
@@ -56,7 +56,9 @@ setup()->
 %    io:format("Line = ~p~n",[{?MODULE,?LINE}]),
     
     % Start a Service application 
-      
+    rpc:call(node(),application,stop,[?APP],10*5000),
+    ok=rpc:call(node(),application,start,[?APP],10*5000),
+    {pong,_,?APP}=rpc:call(node(),?APP,ping,[],1*5000),	
     	 
 
     ok.

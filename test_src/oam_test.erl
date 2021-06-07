@@ -12,9 +12,6 @@
 %-include_lib("eunit/include/eunit.hrl").
 %% --------------------------------------------------------------------
 
--define(GitHostConfigCmd,"git clone https://github.com/joq62/host_config.git").
--define(HostFile,"host_config/hosts.config").
--define(HostConfigDir,"host_config").
 
 
 %% External exports
@@ -77,12 +74,7 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_0()->
-    [{"c0",_,22,"joq62","festum01"},
-     {"c0",_,22,"joq62","festum01"}]=etcd:host_info_read("c0"),
-    {atomic,[ok]}=etcd:host_info_delete("c0","192.168.0.200",22,"joq62","festum01"),
-    [{"c0","192.168.1.200",22,"joq62","festum01"}]=etcd:host_info_read("c0"),
-    "test_cluster"=etcd:cluster_name(),
-    "abc"=etcd:cluster_cookie(),
+
     ok.
 
 %% --------------------------------------------------------------------
@@ -91,9 +83,7 @@ pass_0()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_1()->
-    [{"c1","192.168.0.201",22,"joq62","festum01"},
-     {"c0","192.168.0.200",22,"joq62","festum01"},
-     {"joq62-X550CA","192.168.0.100",22,"joq62","festum01"}]=host_controller:running_hosts(),
+  
     ok.
 
 %% --------------------------------------------------------------------
@@ -101,8 +91,9 @@ pass_1()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_5()->
-
+pass_2()->
+   
+    
     ok.
 
 %% --------------------------------------------------------------------
@@ -111,7 +102,7 @@ pass_5()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_3()->
-  
+
     ok.
 
 %% --------------------------------------------------------------------
@@ -123,30 +114,18 @@ pass_4()->
   
     ok.
 
-
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_2()->
-    ok=cluster_lib:load_config(?HostConfigDir,?HostFile,?GitHostConfigCmd),
-    {ok,HostInfoConfig}=cluster_lib:read_config(?HostFile),
-    [etcd:host_info_create(HostId,Ip,SshPort,UId,Pwd)||
-	    [{host_id,HostId},
-	     {ip,Ip},
-	     {ssh_port,SshPort},
-	     {uid,UId},
-	     {pwd,Pwd}]<-HostInfoConfig],
-
-    [{"c0",_,22,"joq62","festum01"},
-     {"c0",_,22,"joq62","festum01"}]=etcd:host_info_read("c0"),
-    {atomic,[ok]}=etcd:host_info_delete("c0","192.168.0.200",22,"joq62","festum01"),
-    [{"c0","192.168.1.200",22,"joq62","festum01"}]=etcd:host_info_read("c0"),
-    
+pass_5()->
+  
     ok.
 
 
+
+
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
@@ -158,11 +137,9 @@ pass_2()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
--define(APP,oam). 
+
 setup()->
-    rpc:call(node(),application,stop,[?APP],10*5000),
-    ok=rpc:call(node(),application,start,[?APP],10*5000),
-    {pong,_,?APP}=rpc:call(node(),?APP,ping,[],1*5000),	
+  
     ok.
 
 
