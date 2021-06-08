@@ -132,6 +132,7 @@ ping()->
 %
 %% --------------------------------------------------------------------
 init([]) ->
+    
     ok=application:start(support),
     application:set_env([{etcd,[{is_leader,true}]}]),
     ok=application:start(etcd),

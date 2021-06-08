@@ -74,9 +74,31 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_0()->
-    {error,[eexists,"glurk"]}=oam:create_cluster("glurk"),
-    [{"test_1",2,["c0","c1"],"test_1_cookie",[],false}]=oam:create_cluster("test_1"),
-    
+    rpc:call('iaas@c0',init,stop,[]),
+    rpc:call('iaas@c1',init,stop,[]),
+    true=erlang:set_cookie(node(),iaas),
+    timer:sleep(100),
+    HostIds=["c0","c1"],NodeName="iaas",Cookie="iaas",
+    oam_cluster:start_node_hosts(HostIds,NodeName,Cookie),
+    iaas=erlang:get_cookie(),
+    iaas=rpc:call('iaas@c0',erlang,get_cookie,[]),
+    iaas=rpc:call('iaas@c1',erlang,get_cookie,[]),
+
+    rpc:call('n2@c0',init,stop,[]),
+    rpc:call('n2@c1',init,stop,[]),
+    true=erlang:set_cookie(node(),cookie2),
+    timer:sleep(100),
+    HostIds=["c0","c1"],NodeName2="n2",Cookie2="cookie2",
+    oam_cluster:start_node_hosts(HostIds,NodeName2,Cookie2),
+    cookie2=erlang:get_cookie(),
+    cookie2=rpc:call('n2@c0',erlang,get_cookie,[]),
+    cookie2=rpc:call('n2@c1',erlang,get_cookie,[]),
+
+
+    pong=net_adm:ping('n2@c0'),
+    pong=net_adm:ping('n2@c1'),
+    pong=net_adm:ping('iaas@c0'),
+    pong=net_adm:ping('iaas@c1'),
     ok.
 
 %% --------------------------------------------------------------------
