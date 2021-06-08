@@ -32,6 +32,8 @@
 start_node_hosts(HostIds,NodeName,Cookie)->
     F1=fun start_node/2,
     F2=fun check_node/3,
+    true=erlang:set_cookie(node(),list_to_atom(Cookie)),
+    timer:sleep(100),
     AllHosts=etcd:host_info_all(),
     HostsToStart=[[{HostId,Ip,SshPort,UId,Pwd},NodeName,Cookie]
 		  ||{HostId,Ip,SshPort,UId,Pwd}<-AllHosts,

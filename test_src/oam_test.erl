@@ -76,8 +76,8 @@ start()->
 pass_0()->
     rpc:call('iaas@c0',init,stop,[]),
     rpc:call('iaas@c1',init,stop,[]),
-    true=erlang:set_cookie(node(),iaas),
-    timer:sleep(100),
+%    true=erlang:set_cookie(node(),iaas),
+%    timer:sleep(100),
     HostIds=["c0","c1"],NodeName="iaas",Cookie="iaas",
     oam_cluster:start_node_hosts(HostIds,NodeName,Cookie),
     iaas=erlang:get_cookie(),
@@ -86,8 +86,8 @@ pass_0()->
 
     rpc:call('n2@c0',init,stop,[]),
     rpc:call('n2@c1',init,stop,[]),
-    true=erlang:set_cookie(node(),cookie2),
-    timer:sleep(100),
+%    true=erlang:set_cookie(node(),cookie2),
+ %   timer:sleep(100),
     HostIds=["c0","c1"],NodeName2="n2",Cookie2="cookie2",
     oam_cluster:start_node_hosts(HostIds,NodeName2,Cookie2),
     cookie2=erlang:get_cookie(),
