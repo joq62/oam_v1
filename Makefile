@@ -6,7 +6,7 @@ all:
 	rm -rf src/*.beam *.beam  test_src/*.beam test_ebin;
 	rm -rf  *~ */*~  erl_cra*;
 	rm -rf *_specs *_config *.log;
-	rm -rf support etcd catalog controller cluster_config host_config;
+	rm -rf support etcd pod_specs controller cluster_config host_config;
 	echo Done
 doc_gen:
 	echo glurk not implemented
@@ -19,10 +19,10 @@ unit_test:
 	git clone https://github.com/joq62/support.git;
 #	controller
 	rm -rf controller;
-	git clone https://github.com/joq62/controller.git;
+#	git clone https://github.com/joq62/controller.git;
 #	etcd
 	rm -rf etcd;
-	git clone https://github.com/joq62/etcd.git;
+#	git clone https://github.com/joq62/etcd.git;
 #	oam
 	cp src/oam.app ebin;
 	erlc -o ebin src/*.erl;

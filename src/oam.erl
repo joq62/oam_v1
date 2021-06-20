@@ -1,7 +1,10 @@
 %%% -------------------------------------------------------------------
 %%% @author  : Joq Erlang
 %%% @doc: : 
-%%% Manage Computers
+%%% Create Controller per cluster, the Controller ceates the cluster 
+%%% Check health per cluster
+%%% Delete a cluster
+%%% Add + remove hosts per cluster  
 %%% Install Cluster
 %%% Install cluster
 %%% Data-{HostId,Ip,SshPort,Uid,Pwd}
@@ -24,7 +27,7 @@
 %% Key Data structures
 %% 
 %% --------------------------------------------------------------------
--record(state, {running_hosts,missing_hosts}).
+-record(state, {}).
 
 
 
@@ -55,7 +58,9 @@
 % Operate
 -export([
 	 create_cluster/1,
-	 create_cluster/4
+	 create_cluster/4,
+	 status_all_clusters/0,
+	 status_cluster/1
 	]).
 
 -export([
@@ -97,14 +102,18 @@ catalog_info()->
     gen_server:call(?MODULE, {catalog_info},infinity).  
 
 %%---------------------------------------------------------------
+
 create_cluster(ClusterName,NumControllers,Hosts,Cookie)->
     gen_server:call(?MODULE, {create_cluster,ClusterName,Cookie,Hosts,NumControllers},infinity).
-
-
-create_cluster(ConfigFile)->
-    gen_server:call(?MODULE, {create_cluster,ConfigFile},infinity).
-delete_cluster(Name)->
-    gen_server:call(?MODULE, {delete,Name},infinity).    
+create_cluster(ClusterId)->
+    gen_server:call(?MODULE, {create_cluster,ClusterId},infinity).
+delete_cluster(ClusterId)->
+    gen_server:call(?MODULE, {delete,ClusterId},infinity).
+status_all_clusters()->    
+    gen_server:call(?MODULE, {status_all_clusters},infinity).
+status_cluster(ClusterId)->
+    gen_server:call(?MODULE, {status_cluster,ClusterId},infinity).
+    
 
 
 
@@ -131,14 +140,15 @@ ping()->
 %%          {stop, Reason}
 %
 %% --------------------------------------------------------------------
+
+
 init([]) ->
+    % Stop and restart mnesia
+    ok=oam_lib:init_dbase(),
+   
     
-    ok=application:start(support),
-    application:set_env([{etcd,[{is_leader,true}]}]),
-    ok=application:start(etcd),
-    {ok,_}=host_controller:start(),
-    [{running,Running},{missing,Missing}]=host_controller:status_hosts(),
-    {ok, #state{running_hosts=Running,missing_hosts=Missing}}.
+    
+    {ok, #state{}}.
     
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
