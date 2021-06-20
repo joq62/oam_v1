@@ -124,10 +124,29 @@ init_host_info([[{host_id,HostId},{ip,Ip},{ssh_port,SshPort},{uid,UId},{pwd,Pwd}
 init_pod_specs()->
     os:cmd("rm -rf "++?PodSpecsDir),
     os:cmd("git clone "++?PodSpecsPath),
-%    {ok,PodSpecFiles}=file:
-
+    ok=db_pod_spec:create_table(),
+    {ok,FileNames}=file:list_dir(?PodSpecsDir),
+    PodSpecFiles=[filename:join([?PodSpecsDir,FileName])||FileName<-FileNames,
+							 filename:extension(FileName)==".pod_spec"],
+    ok=init_pod_specs(PodSpecFiles,[]),
+      
     ok.
 
+init_pod_specs([],Result)->
+    R=[R||R<-Result,
+	  R/={atomic,ok}],
+    case R of
+	[]->
+	    ok;
+	R->
+	    {error,[R]}
+    end;
+init_pod_specs([PodSpecFile|T],Acc)->
+    {ok,Info}=file:consult(PodSpecFile),
+    [{pod_id,PodId},{pod_vsn,PodVsn},{application,{AppId,AppVsn,AppGitPath}},{app_env,AppEnv},{app_hosts,AppHosts}]=Info,
+    R=db_pod_spec:create(PodId,PodVsn,AppId,AppVsn,AppGitPath,AppEnv,AppHosts),
+    init_pod_specs(T,[R|Acc]).
+    
 %% --------------------------------------------------------------------
 %% Function:start
 %% Description: List of test cases 
