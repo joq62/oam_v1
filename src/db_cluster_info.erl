@@ -44,28 +44,11 @@ read_all() ->
     [{ClusterId,ControllerHost,NumWorkers,WorkerHosts,Cookie,ControllerNode}||
 	{?RECORD,ClusterId,ControllerHost,NumWorkers,WorkerHosts,Cookie,ControllerNode}<-Z].
 
-info(ClusterId)->
+read(ClusterId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.cluster_id==ClusterId])),
     [{XClusterId,ControllerHost,NumWorkers,WorkerHosts,Cookie,ControllerNode}||
-	{?RECORD,XClusterId,ControllerHost,NumWorkers,WorkerHosts,Cookie,ControllerNode}<-Z].
-
-
-controller_host(ClusterId)->
-    case info(ClusterId) of
-	[]->
-	    {error,[eexist,ClusterId]};
-	[{_ClusterId,ControllerHost,_NumWorkers,_WorkerHosts,_Cookie,_ControllerNode}]->
-	    ControllerHost
-    end.
-
-cookie(ClusterId)->
-    case info(ClusterId) of
-	[]->
-	    {error,[eexist,ClusterId]};
-	[{_ClusterId,_ControllerHost,_NumWorkers,_WorkerHosts,Cookie,_ControllerNode}]->
-	    Cookie
-    end.
+	       {?RECORD,XClusterId,ControllerHost,NumWorkers,WorkerHosts,Cookie,ControllerNode}<-Z].
 
 do(Q) ->
   F = fun() -> qlc:e(Q) end,

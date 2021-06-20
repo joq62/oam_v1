@@ -47,6 +47,10 @@
 
 % OaM related
 % Admin
+-export([
+	 status_all_clusters/0
+	]).
+
 
 -export([
 	 status_hosts/0,
@@ -59,7 +63,7 @@
 -export([
 	 create_cluster/1,
 	 create_cluster/4,
-	 status_all_clusters/0,
+	 
 	 status_cluster/1
 	]).
 

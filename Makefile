@@ -16,7 +16,9 @@ unit_test:
 	rm -rf *_specs *_config *.log;
 #	support
 	rm -rf support;
-	git clone https://github.com/joq62/support.git;
+	erlc -o ebin ../support/src/*.erl;
+#	iaas
+	erlc -o ebin ../iaas/src/*.erl;
 #	controller
 	rm -rf controller;
 #	git clone https://github.com/joq62/controller.git;
@@ -30,7 +32,7 @@ unit_test:
 	mkdir test_ebin;
 	cp test_src/*.app test_ebin;
 	erlc -o test_ebin test_src/*.erl;
-	erl -pa ebin -pa test_ebin -pa etcd/ebin -pa support/ebin -pa controller/ebin\
+	erl -pa ebin -pa test_ebin\
 	    -setcookie abc\
 	    -sname test_oam\
 	    -run unit_test start_test test_src/test.config

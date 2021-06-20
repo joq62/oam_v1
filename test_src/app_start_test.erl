@@ -59,6 +59,9 @@ setup()->
     rpc:call(node(),application,stop,[?APP],10*5000),
     ok=rpc:call(node(),application,start,[?APP],10*5000),
     {pong,_,?APP}=rpc:call(node(),?APP,ping,[],1*5000),	
+
+    {pong,_,iaas}=iaas:ping(),
+    
     	 
 
     ok.
