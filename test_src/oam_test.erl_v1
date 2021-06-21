@@ -41,13 +41,13 @@ start()->
     ok=pass_1(),
     io:format("~p~n",[{"Stop pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
- %   io:format("~p~n",[{"Start pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
- %   ok=pass_2(),
- %   io:format("~p~n",[{"Stop pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_2(),
+    io:format("~p~n",[{"Stop pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-    io:format("~p~n",[{"Start pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=pass_3(),
-    io:format("~p~n",[{"Stop pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
+%    io:format("~p~n",[{"Start pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
+%    ok=pass_3(),
+%    io:format("~p~n",[{"Stop pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
   %  io:format("~p~n",[{"Start pass_4()",?MODULE,?FUNCTION_NAME,?LINE}]),
   %  ok=pass_4(),
@@ -133,33 +133,47 @@ pass_2()->
     io:format("production_kubelet_c1@c1 ~p~n",[rpc:call('production_kubelet_c1@c1',init,stop,[])]),
     timer:sleep(1000),
      io:format("test_1_kubelet_c0@c0 ~p~n",[rpc:call('test_1_kubelet_c0@c0',init,stop,[])]),
-    {error,[{error,[eexists,glurk]}]}=iaas:create_cluster(glurk),
-    
-    %
-    WantedClusterIds=iaas:wanted_clusters(),
-    io:format("WantedClusterIds ~p~n",[WantedClusterIds]),
-    RunningClusters=iaas:running_clusters(),
-    ClusterToCreate=[ClusterId||ClusterId<-iaas:wanted_clusters(),
-				false==lists:keymember(ClusterId,1,iaas:running_clusters())],
-    io:format("ClusterToCreate ~p~n",[ClusterToCreate]),
-    [Id1,Id2]=ClusterToCreate,
-    ok=iaas:create_cluster(Id1),
-    timer:sleep(1000),
-     io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
-    [Id2]=[XClusterId||XClusterId<-iaas:wanted_clusters(),
-	    false==lists:keymember(XClusterId,1,iaas:running_clusters())],
-    io:format("Id2 ~p~n",[Id2]),
-    ok=iaas:create_cluster(Id2),
-    []=[ClusterId||ClusterId<-iaas:wanted_clusters(),
-		   false==lists:keymember(ClusterId,1,iaas:running_clusters())],
-  %  {{running_clusters,RunningClusters},
-  %  {not_available_clusters,[]}}=iaas:status_all_clusters(),
-    
-  %  RunningClusters=iaas:running_clusters(),
-     
-    
-  
+    {error,[eexists,glurk]}=iaas:create_cluster(glurk),
 
+    timer:sleep(1000),
+    [{P1,_},
+     {P2,_}]=iaas:create_cluster("production"),
+    pong=net_adm:ping(P1),
+    pong=net_adm:ping(P2),
+    [{T1,_}]=iaas:create_cluster("test_1"),
+    pong=net_adm:ping(T1),
+    io:format("Wait to create salves ~p~n",[?MODULE]),
+    timer:sleep(3000),
+    %slave test 
+    erlang:set_cookie(node(),'production_cookie'),
+    timer:sleep(1000),
+    io:format("p1_controller@c0 ~p~n",[rpc:call('p1_controller@c0',init,stop,[])]),
+    io:format("'p1_controller@c1' ~p~n",[rpc:call('p1_controller@c1',init,stop,[])]),
+    erlang:set_cookie(node(),'test_1_cookie'),
+    timer:sleep(1000),
+    io:format("'t1_controller@c0' ~p~n",[rpc:call('t1_controller@c0',init,stop,[])]),
+    io:format("'t1_controller@c1' ~p~n",[rpc:call('t1_controller@c1',init,stop,[])]),
+    
+   % io:format("P1 nodes ~p~n",[rpc:call(P1,erlang,nodes,[])]),
+    {ok,P1Host}=rpc:call(P1,inet,gethostname,[]),
+    P1_cookie=atom_to_list(rpc:call(P1,erlang,get_cookie,[])),
+    erlang:set_cookie(node(),rpc:call(P1,erlang,get_cookie,[])),
+    timer:sleep(1000),
+    {ok,P1Controller}=rpc:call(P1,slave,start,[P1Host,"p1_controller","-setcookie "++P1_cookie]),
+    io:format("P1 nodes + controller ~p~n",[rpc:call(P1,erlang,nodes,[])]),
+    
+ %slave test 
+   % io:format("T1 nodes ~p~n",[rpc:call(T1,erlang,nodes,[])]),
+    {ok,T1Host}=rpc:call(T1,inet,gethostname,[]),
+    T1_cookie=atom_to_list(rpc:call(T1,erlang,get_cookie,[])),
+    erlang:set_cookie(node(),rpc:call(T1,erlang,get_cookie,[])),
+    timer:sleep(1000),
+    {ok,T1Controller}=rpc:call(T1,slave,start,[T1Host,"t1_controller","-setcookie "++T1_cookie]),
+    io:format("T1 nodes + controller ~p~n",[rpc:call(T1,erlang,nodes,[])]),
+    
+    io:format("'t1_controller@c0' ~p~n",[rpc:call('t1_controller@c0',init,stop,[])]),
+    io:format("'t1_controller@c1' ~p~n",[rpc:call('t1_controller@c1',init,stop,[])]),
+    
     ok.
 
 %% --------------------------------------------------------------------
@@ -168,16 +182,9 @@ pass_2()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_3()->
-    
-    check(3),
+
     ok.
 
-check(0)->
-    ok;
-check(N) ->
-    io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
-    timer:sleep(3000),
-    check(N-1).
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
