@@ -37,17 +37,17 @@ start()->
     ok=pass_0(),
    io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
- %   io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
- %   ok=pass_1(),
- %   io:format("~p~n",[{"Stop pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_1(),
+    io:format("~p~n",[{"Stop pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
  %   io:format("~p~n",[{"Start pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
  %   ok=pass_2(),
  %   io:format("~p~n",[{"Stop pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-%    io:format("~p~n",[{"Start pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
-%    ok=pass_3(),
-%    io:format("~p~n",[{"Stop pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_3(),
+    io:format("~p~n",[{"Stop pass_3()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
   %  io:format("~p~n",[{"Start pass_4()",?MODULE,?FUNCTION_NAME,?LINE}]),
   %  ok=pass_4(),
@@ -74,22 +74,23 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_0()->
+    [{"test_1",["c0"],2,[],"test_1_cookie",[]},
+     {"production",["c1"],2,["c0","c1"],"production_cookie",[]}]=db_cluster_info:read_all(),
+
+    [{"c2","192.168.0.202",22,"joq62","festum01"},
+     {"c2","192.168.1.202",22,"joq62","festum01"},
+     {"c1","192.168.0.201",22,"joq62","festum01"},
+     {"c1","192.168.1.201",22,"joq62","festum01"},
+     {"c0","192.168.0.200",22,"joq62","festum01"},
+     {"c0","192.168.1.200",22,"joq62","festum01"}]=db_host_info:read_all(),
+
+    [{"c2","192.168.0.202",22,"joq62","festum01"}, 
+     {"c2","192.168.1.202",22,"joq62","festum01"}]=db_host_info:read("c2"),
     
-    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-    io:format("host info= ~p~n",[db_host_info:read_all()]),
-    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-    
-    {{running,R1},{missing,M1}}=cluster:status_clusters(),
-    io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
-    [cluster:create(ClusterId)||{ClusterId,_}<-M1],
- %   io:format("create(test_2) = ~p~n",[cluster:create("test_2")]),
-    timer:sleep(1000),
-    {{running,R2},{missing,M2}}=cluster:status_clusters(),
-    io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
-%    io:format("2. status_clusters() = ~p~n",[cluster:status_clusters()]),    
-    [cluster:delete(ClusterId)||{ClusterId,_}<-R2],
-%    io:format("delete(test_2) = ~p~n",[cluster:delete("test_2")]),
-    io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]),    
+
+    [{"orginal","1.0.0","orginal","1.0.0",
+      "https://github.com/joq62/orginal.git",[],
+      []}]=db_pod_spec:read_all(),
     ok.
 
 %% --------------------------------------------------------------------
@@ -98,10 +99,25 @@ pass_0()->
 %% Returns: non
 %% --------------------------------------------------------------------
 pass_1()->
-  %  io:format("update_host_status= ~p~n",[iaas:update_host_status()]),
-%    io:format("status_all_hosts= ~p~n",[iaas:status_all_hosts()]),
- %   io:format("running_hosts= ~p~n",[iaas:running_hosts()]),
- %   io:format("not_available_hosts()= ~p~n",[iaas:not_available_hosts()]),
+    {[{running,_,_,_},
+      {running,_,_,_}],
+     [{not_available,_,_,_},
+      {not_available,_,_,_},
+      {not_available,_,_,_},
+      {not_available,_,_,_}]}=iaas:status_all_hosts(),
+  
+    [{running,_,_,22},
+     {running,_,_,22}]=iaas:running_hosts(),
+    [{not_available,_,_,_},
+     {not_available,_,_,_},
+     {not_available,_,_,_},
+     {not_available,_,_,_}]=iaas:not_available_hosts(),
+    
+    [{not_available,"c2",_,22},
+     {not_available,"c2",_,22}]=iaas:status_host("c2"),
+    [{_,"c1",_,22},
+     {_,"c1",_,22}]=iaas:status_host("c1"),
+    
     
     ok.
 
@@ -126,16 +142,16 @@ pass_2()->
     ClusterToCreate=[ClusterId||ClusterId<-iaas:wanted_clusters(),
 				false==lists:keymember(ClusterId,1,iaas:running_clusters())],
     io:format("ClusterToCreate ~p~n",[ClusterToCreate]),
- %   [Id1,Id2]=ClusterToCreate,
-  %  ok=iaas:create_cluster(Id1),
-  %  timer:sleep(1000),
-  %   io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
-  %  [Id2]=[XClusterId||XClusterId<-iaas:wanted_clusters(),
-%	    false==lists:keymember(XClusterId,1,iaas:running_clusters())],
- %   io:format("Id2 ~p~n",[Id2]),
-  %  ok=iaas:create_cluster(Id2),
-  %  []=[ClusterId||ClusterId<-iaas:wanted_clusters(),
-%		   false==lists:keymember(ClusterId,1,iaas:running_clusters())],
+    [Id1,Id2]=ClusterToCreate,
+    ok=iaas:create_cluster(Id1),
+    timer:sleep(1000),
+     io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
+    [Id2]=[XClusterId||XClusterId<-iaas:wanted_clusters(),
+	    false==lists:keymember(XClusterId,1,iaas:running_clusters())],
+    io:format("Id2 ~p~n",[Id2]),
+    ok=iaas:create_cluster(Id2),
+    []=[ClusterId||ClusterId<-iaas:wanted_clusters(),
+		   false==lists:keymember(ClusterId,1,iaas:running_clusters())],
   %  {{running_clusters,RunningClusters},
   %  {not_available_clusters,[]}}=iaas:status_all_clusters(),
     
