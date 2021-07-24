@@ -33,6 +33,10 @@ start()->
     ok=setup(),
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
+    io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=iaas_cluster(),
+   io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
+
     io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
     ok=pass_0(),
    io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
@@ -73,11 +77,22 @@ start()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
+
+iaas_cluster()->
+    io:format("~p~n ",[iaas:status_all_clusters()]),
+    timer:sleep(5*1000),
+    iaas_cluster().
+    
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
 pass_0()->
     
-    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-    io:format("host info= ~p~n",[db_host_info:read_all()]),
-    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
+%    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
+%    io:format("host info= ~p~n",[db_host_info:read_all()]),
+%    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
     
     {{running,R1},{missing,M1}}=cluster:status_clusters(),
     io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
