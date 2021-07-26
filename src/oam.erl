@@ -48,6 +48,7 @@
 % OaM related
 % Admin
 -export([
+	 install/1,
 	 status_all_clusters/0
 	]).
 
@@ -98,6 +99,9 @@ stop()-> gen_server:call(?MODULE, {stop},infinity).
 
 
 %%  Admin 
+install(ClusterId)->
+    gen_server:call(?MODULE, {install,ClusterId},infinity).    
+
 status_hosts()->
     gen_server:call(?MODULE, {status_hosts},infinity).
 cluster_info()->
@@ -167,6 +171,10 @@ init([]) ->
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
 
+
+handle_call({install,ClusterId},_From,State) ->
+    Reply=rpc:call(node(),oam_lib,install,[ClusterId],25*1000),
+    {reply, Reply, State};
 
 handle_call({cluster_info},_From,State) ->
     Reply=etcd:cluster_info(),

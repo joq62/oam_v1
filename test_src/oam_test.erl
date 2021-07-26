@@ -33,13 +33,13 @@ start()->
     ok=setup(),
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-    io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=iaas_cluster(0),
-   io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
+  %  io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
+  %  ok=iaas_cluster(0),
+  % io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-  %  io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
-  %  ok=pass_0(),
-  % io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_0(),
+   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
 %    io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 %    ok=pass_1(),
@@ -79,7 +79,9 @@ start()->
 %% --------------------------------------------------------------------
 
 iaas_cluster(N)->
-  %  io:format("~p~n ",[{time(),iaas:status_all_clusters()}]),
+    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
+    io:format("host info= ~p~n",[db_host_info:read_all()]),
+    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
     timer:sleep(100*1000),
     iaas_cluster(N).
     
@@ -93,7 +95,11 @@ pass_0()->
 %    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
 %    io:format("host info= ~p~n",[db_host_info:read_all()]),
 %    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-    
+    io:format("delete(production) = ~p~n",[cluster:delete("production")]),
+    io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
+    io:format("delete(test_10) = ~p~n",[cluster:delete("test_10")]),
+    io:format("delete(error_10) = ~p~n",[cluster:delete("error_10")]),   
+    timer:sleep(3000),
     {{running,R1},{missing,M1}}=cluster:status_clusters(),
     io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
   %  [cluster:create(ClusterId)||{ClusterId,_}<-M1],
@@ -105,11 +111,10 @@ pass_0()->
     io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
 %    io:format("2. status_clusters() = ~p~n",[cluster:status_clusters()]),    
     [cluster:delete(ClusterId)||{ClusterId,_}<-R2],
-    io:format("delete(test_2) = ~p~n",[cluster:delete("test_2")]),
+    timer:sleep(3000),
     io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]), 
 
     timer:sleep(2000),
-    pass_0(),
     ok.
 
 %% --------------------------------------------------------------------

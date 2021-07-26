@@ -25,7 +25,8 @@
 % New final ?
 
 -export([
-	 init_dbase/0
+	 init_dbase/0,
+	 install/1
 
 	]).
 
@@ -45,6 +46,15 @@
 %% ====================================================================
 %% External functions
 %% ====================================================================
+%% --------------------------------------------------------------------
+%% Function:start
+%% Description: List of test cases 
+%% Returns: non
+%% --------------------------------------------------------------------
+install(ClusterId)->
+ %   case rpc:call(node(),iaas,create,[ClusterId]
+    
+    glurk.
 %% --------------------------------------------------------------------
 %% Function:start
 %% Description: List of test cases 
@@ -112,8 +122,8 @@ init_host_info([],Result)->
 	    {error,[R]}
     end;
     
-init_host_info([[{host_id,HostId},{ip,Ip},{ssh_port,SshPort},{uid,UId},{pwd,Pwd}]|T],Acc)->
-    R=db_host_info:create(HostId,Ip,SshPort,UId,Pwd),
+init_host_info([[{alias,Alias},{host_id,HostId},{ip,Ip},{ssh_port,SshPort},{uid,UId},{pwd,Pwd}]|T],Acc)->
+    R=db_host_info:create(Alias,HostId,Ip,SshPort,UId,Pwd),
     init_host_info(T,[R|Acc]).
     
 %% --------------------------------------------------------------------

@@ -52,7 +52,7 @@ unit_test:
 	erlc -o ebin ../iaas/src/*.erl;
 #	controller
 	rm -rf controller;
-#	git clone https://github.com/joq62/controller.git;
+	erlc -o ebin ../controller/src/*.erl;
 #	etcd
 	rm -rf etcd;
 #	git clone https://github.com/joq62/etcd.git;

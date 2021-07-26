@@ -7,6 +7,7 @@
 -define(TABLE,host_info).
 -define(RECORD,host_info).
 -record(host_info,{
+		   alias,
 		   host_id,
 		   ip,
 		   ssh_port,
@@ -27,8 +28,9 @@ create_table(NodeList)->
 				 {disc_copies,NodeList}]),
     mnesia:wait_for_tables([?TABLE], 20000).
 
-create(HostId,Ip,SshPort,UId,Pwd)->
+create(Alias,HostId,Ip,SshPort,UId,Pwd)->
     Record=#?RECORD{
+		    alias=Alias,
 		    host_id=HostId,
 		    ip=Ip,
 		    ssh_port=SshPort,
@@ -40,16 +42,17 @@ create(HostId,Ip,SshPort,UId,Pwd)->
 
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{HostId,Ip,SshPort,UId,Pwd}||{?RECORD,HostId,Ip,SshPort,UId,Pwd}<-Z].
+    [{Alias,HostId,Ip,SshPort,UId,Pwd}||{?RECORD,Alias,HostId,Ip,SshPort,UId,Pwd}<-Z].
 
-read(HostId)->
+read(Alias)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.host_id==HostId])),
-    [{XHostId,Ip,SshPort,UId,Pwd}||{?RECORD,XHostId,Ip,SshPort,UId,Pwd}<-Z].
+		     X#?RECORD.alias==Alias])),
+    [{XAlias,HostId,Ip,SshPort,UId,Pwd}||{?RECORD,XAlias,HostId,Ip,SshPort,UId,Pwd}<-Z].
 
-delete(HostId,Ip,SshPort,UId,Pwd) ->
+delete(Alias,HostId,Ip,SshPort,UId,Pwd) ->
     F = fun() -> 
 		ToBeRemoved=[X||X<-mnesia:read({?TABLE,HostId}),
+				X#?RECORD.alias=:=Alias,
 				X#?RECORD.host_id=:=HostId,
 				X#?RECORD.ip=:=Ip,
 				X#?RECORD.ssh_port=:=SshPort,
@@ -72,18 +75,3 @@ do(Q) ->
   Val.
 
 %%-------------------------------------------------------------------------
-sort_by_date([])->
-    [];
-%sort_by_date([{Severity,Vm,Module,Line,Date,Time,DateTime,Text}|T]) ->
-%    sort_by_date([{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}||{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}<-T,
-%									     XDateTime=<DateTime])
-%	++[{Severity,Vm,Module,Line,Date,Time,Text}]++
-%	sort_by_date([{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}||{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}<-T,
-%										 XDateTime>DateTime]).
-
-sort_by_date([{Severity,Vm,Module,Line,Date,Time,DateTime,Text}|T]) ->
-    lists:append([sort_by_date([{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}||{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}<-T,
-									     XDateTime=<DateTime]),
-	[{Severity,Vm,Module,Line,Date,Time,Text}],
-	sort_by_date([{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}||{XSeverity,XVm,XModule,XLine,XDate,XTime,XDateTime,XText}<-T,
-										 XDateTime>DateTime])]).
