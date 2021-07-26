@@ -34,16 +34,16 @@ start()->
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
     io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=iaas_cluster(),
+    ok=iaas_cluster(0),
    io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-    io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=pass_0(),
-   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+  %  io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+  %  ok=pass_0(),
+  % io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
- %   io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
- %   ok=pass_1(),
- %   io:format("~p~n",[{"Stop pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
+%    io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
+%    ok=pass_1(),
+%    io:format("~p~n",[{"Stop pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
  %   io:format("~p~n",[{"Start pass_2()",?MODULE,?FUNCTION_NAME,?LINE}]),
  %   ok=pass_2(),
@@ -78,10 +78,10 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 
-iaas_cluster()->
-    io:format("~p~n ",[iaas:status_all_clusters()]),
-    timer:sleep(5*1000),
-    iaas_cluster().
+iaas_cluster(N)->
+  %  io:format("~p~n ",[{time(),iaas:status_all_clusters()}]),
+    timer:sleep(100*1000),
+    iaas_cluster(N).
     
 %% --------------------------------------------------------------------
 %% Function:start/0 
@@ -96,15 +96,20 @@ pass_0()->
     
     {{running,R1},{missing,M1}}=cluster:status_clusters(),
     io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
-    [cluster:create(ClusterId)||{ClusterId,_}<-M1],
+  %  [cluster:create(ClusterId)||{ClusterId,_}<-M1],
+    [io:format("create = ~p~n",[{ClusterId,cluster:create(ClusterId)}])||{ClusterId,_}<-M1],  
+  
  %   io:format("create(test_2) = ~p~n",[cluster:create("test_2")]),
     timer:sleep(1000),
     {{running,R2},{missing,M2}}=cluster:status_clusters(),
     io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
 %    io:format("2. status_clusters() = ~p~n",[cluster:status_clusters()]),    
     [cluster:delete(ClusterId)||{ClusterId,_}<-R2],
-%    io:format("delete(test_2) = ~p~n",[cluster:delete("test_2")]),
-    io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]),    
+    io:format("delete(test_2) = ~p~n",[cluster:delete("test_2")]),
+    io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]), 
+
+    timer:sleep(2000),
+    pass_0(),
     ok.
 
 %% --------------------------------------------------------------------
@@ -117,7 +122,12 @@ pass_1()->
 %    io:format("status_all_hosts= ~p~n",[iaas:status_all_hosts()]),
  %   io:format("running_hosts= ~p~n",[iaas:running_hosts()]),
  %   io:format("not_available_hosts()= ~p~n",[iaas:not_available_hosts()]),
-    
+ 
+    io:format("1 status_clusters() = ~p~n",[cluster:status_clusters()]),   
+    io:format("create test_1= ~p~n",[{"test_1",cluster:create("test_1")}]), 
+    io:format("2 status_clusters() = ~p~n",[cluster:status_clusters()]),   
+    io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
+    io:format("3 status_clusters() = ~p~n",[cluster:status_clusters()]), 
     ok.
 
 %% --------------------------------------------------------------------
@@ -211,7 +221,7 @@ pass_5()->
 %% --------------------------------------------------------------------
 
 setup()->
-  
+
     ok.
 
 

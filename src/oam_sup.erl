@@ -62,7 +62,9 @@ init([]) ->
 
 children()->
     [?CHILD(oam,worker),
-     ?CHILD(iaas,worker)].
+     ?CHILD(controller,worker),
+     ?CHILD(iaas,worker)
+    ].
 %% ====================================================================
 %% Internal functions
 %% ====================================================================

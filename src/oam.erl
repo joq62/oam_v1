@@ -75,6 +75,7 @@
 
 -export([start/0,
 	 stop/0,
+	 boot/0,
 	 ping/0
 	]).
 
@@ -88,7 +89,8 @@
 
 %% Asynchrounus Signals
 
-
+boot()->
+    application:start(oam).
 %% Gen server functions
 
 start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
