@@ -11,7 +11,7 @@
 %% --------------------------------------------------------------------
 %-include_lib("eunit/include/eunit.hrl").
 %% --------------------------------------------------------------------
-
+-include("kube_logger.hrl").
 
 
 %% External exports
@@ -95,24 +95,33 @@ pass_0()->
 %    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
 %    io:format("host info= ~p~n",[db_host_info:read_all()]),
 %    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-    io:format("delete(production) = ~p~n",[cluster:delete("production")]),
-    io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
-    io:format("delete(test_10) = ~p~n",[cluster:delete("test_10")]),
-    io:format("delete(error_10) = ~p~n",[cluster:delete("error_10")]),   
+
+  %  io:format("delete(production) = ~p~n",[cluster:delete("production")]),
+ %   io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
+  %  io:format("delete(test_10) = ~p~n",[cluster:delete("test_10")]),
+  %  io:format("delete(error_10) = ~p~n",[cluster:delete("error_10")]),  
+    cluster:delete("production"),
+    cluster:delete("test_1"),
+    cluster:delete("test_10"),
+    cluster:delete("error_10"),    
     timer:sleep(3000),
     {{running,R1},{missing,M1}}=cluster:status_clusters(),
-    io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
-  %  [cluster:create(ClusterId)||{ClusterId,_}<-M1],
-    [io:format("create = ~p~n",[{ClusterId,cluster:create(ClusterId)}])||{ClusterId,_}<-M1],  
+  %  io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
+    ?PrintLog(log,"1. status_clusters()",[{running,R1},{missing,M1}]),
+    [cluster:create(ClusterId)||ClusterId<-M1],
+ %   [io:format("create = ~p~n",[{ClusterId,cluster:create(ClusterId)}])||{ClusterId,_}<-M1],  
   
  %   io:format("create(test_2) = ~p~n",[cluster:create("test_2")]),
     timer:sleep(1000),
     {{running,R2},{missing,M2}}=cluster:status_clusters(),
-    io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
+  %
+    ?PrintLog(log,"2. status_clusters()",[{running,R2},{missing,M2}]),
+%  io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
 %    io:format("2. status_clusters() = ~p~n",[cluster:status_clusters()]),    
-    [cluster:delete(ClusterId)||{ClusterId,_}<-R2],
+    [cluster:delete(ClusterId)||ClusterId<-R2],
     timer:sleep(3000),
-    io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]), 
+    ?PrintLog(log,"3. status_clusters()",[cluster:status_clusters()]),
+ %   io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]), 
 
     timer:sleep(2000),
     ok.

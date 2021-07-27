@@ -16,15 +16,15 @@ exec_test:
 	rm -rf  *~ */*~  erl_cra*;
 	rm -rf *_specs *_config *.log;
 #	interface
-	erlc -o ebin ../interfaces/*.erl;
+	erlc -I ../interfaces -o ebin ../interfaces/*.erl;
 #	support
 	rm -rf support;
-	erlc -o ebin ../support/src/*.erl;
+	erlc -I ../interfaces -o ebin ../support/src/*.erl;
 #	iaas
-	erlc -o ebin ../iaas/src/*.erl;
+	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
 #	controller
 	rm -rf controller;
-	erlc -o ebin ../controller/src/*.erl;
+	erlc -I ../interfaces -o ebin ../controller/src/*.erl;
 #	
 #	git clone https://github.com/joq62/controller.git;
 #	etcd
@@ -32,7 +32,7 @@ exec_test:
 #	git clone https://github.com/joq62/etcd.git;
 #	oam
 	cp src/oam.app ebin;
-	erlc -o ebin src/*.erl;
+	erlc -I ../interfaces -o ebin src/*.erl;
 #	test application
 	mkdir test_ebin;
 	erl -pa ebin\
@@ -44,25 +44,25 @@ unit_test:
 	rm -rf  *~ */*~  erl_cra*;
 	rm -rf *_specs *_config *.log;
 #	interface
-	erlc -o ebin ../interfaces/*.erl;
+	erlc -I ../interfaces -o ebin ../interfaces/*.erl;
 #	support
 	rm -rf support;
-	erlc -o ebin ../support/src/*.erl;
+	erlc -I ../interfaces -o ebin ../support/src/*.erl;
 #	iaas
-	erlc -o ebin ../iaas/src/*.erl;
+	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
 #	controller
 	rm -rf controller;
-	erlc -o ebin ../controller/src/*.erl;
+	erlc -I ../interfaces -o ebin ../controller/src/*.erl;
 #	etcd
 	rm -rf etcd;
 #	git clone https://github.com/joq62/etcd.git;
 #	oam
 	cp src/oam.app ebin;
-	erlc -o ebin src/*.erl;
+	erlc -I ../interfaces -o ebin src/*.erl;
 #	test application
 	mkdir test_ebin;
 	cp test_src/*.app test_ebin;
-	erlc -o test_ebin test_src/*.erl;
+	erlc -I ../interfaces -o test_ebin test_src/*.erl;
 	erl -pa ebin -pa test_ebin\
 	    -setcookie abc\
 	    -sname test_oam\
