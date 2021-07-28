@@ -153,10 +153,9 @@ ping()->
 
 
 init([]) ->
-    % Stop and restart mnesia
-    ok=oam_lib:init_dbase(),
-   
-    
+    application:set_env([{kubelet,[{cluster_id,glurk}]}]),
+    ok=application:start(kubelet),
+    {ok,_}=iaas:start(),
     
     {ok, #state{}}.
     

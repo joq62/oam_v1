@@ -22,10 +22,11 @@ exec_test:
 	erlc -I ../interfaces -o ebin ../support/src/*.erl;
 #	iaas
 	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
-#	controller
-	rm -rf controller;
-	erlc -I ../interfaces -o ebin ../controller/src/*.erl;
-#	
+#	node
+	cp ../applications/kubelet/src/*.app ebin;
+	erlc -I ../interfaces -o ebin ../node/src/*.erl;
+	erlc -I ../interfaces -o ebin ../applications/kubelet/src/*.erl;
+#	node
 #	git clone https://github.com/joq62/controller.git;
 #	etcd
 	rm -rf etcd;
@@ -50,12 +51,13 @@ unit_test:
 	erlc -I ../interfaces -o ebin ../support/src/*.erl;
 #	iaas
 	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
+#	node
+	cp ../applications/kubelet/src/*.app ebin;
+	erlc -I ../interfaces -o ebin ../node/src/*.erl;
+	erlc -I ../interfaces -o ebin ../applications/kubelet/src/*.erl;
 #	controller
 	rm -rf controller;
 	erlc -I ../interfaces -o ebin ../controller/src/*.erl;
-#	etcd
-	rm -rf etcd;
-#	git clone https://github.com/joq62/etcd.git;
 #	oam
 	cp src/oam.app ebin;
 	erlc -I ../interfaces -o ebin src/*.erl;

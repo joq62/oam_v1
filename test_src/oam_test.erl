@@ -33,13 +33,17 @@ start()->
     ok=setup(),
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
+    io:format("~p~n",[{"Start kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=kubelet(),
+    io:format("~p~n",[{"Stop kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
+
   %  io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
   %  ok=iaas_cluster(0),
-  % io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
+  %  io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-    io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=pass_0(),
-   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+ %   io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+ %   ok=pass_0(),
+ %  io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
 %    io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 %    ok=pass_1(),
@@ -78,12 +82,60 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 
+kubelet()->
+   % io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
+   % io:format("host info= ~p~n",[db_host_info:read_all()]),
+   % io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
+    
+    application:set_env([{kubelet,[{cluster_id,glurk}]}]),
+    application:start(kubelet),
+    {ok,_}=iaas:start(),
+    {{running,RunningClusters},{missing,_}}=iaas:status_all_clusters(),    
+   % ?PrintLog(debug,"running clusters",[RunningClusters]),
+    Result=[start_kube(ClusterId,Nodes,"kubelet")||{ClusterId,Nodes}<-RunningClusters],
+    ?PrintLog(debug,"start result",[Result]),
+    ok.
+   
+start_kube(ClusterId,Nodes,PodId)->
+    start_kube(ClusterId,Nodes,PodId,[]).
+
+start_kube(_ClusterId,[],_PodId,StartResult)->
+    StartResult;
+start_kube(ClusterId,[Node|T],PodId,Acc)->
+    NewAcc=[rpc:call(Node,kubelet,ping,[],2*1000)|Acc],
+  %  ?PrintLog(debug,"start kube",[Node,ClusterId,NewAcc]),
+    start_kube(ClusterId,T,PodId,NewAcc).
+    
+    
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+
 iaas_cluster(N)->
-    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-    io:format("host info= ~p~n",[db_host_info:read_all()]),
-    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-    timer:sleep(100*1000),
-    iaas_cluster(N).
+   % io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
+   % io:format("host info= ~p~n",[db_host_info:read_all()]),
+   % io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
+
+
+    [KubeNode|T]=nodes(),
+    io:format("Nodes = ~p~n",[nodes()]),
+    io:format("KubeNode = ~p~n",[KubeNode]),
+    [OrginalPodSpec]=db_pod_spec:read("orginal"),
+    io:format("Orginal pod = ~p~n",[OrginalPodSpec]),
+    ok=pod:load(KubeNode,"orginal",OrginalPodSpec),
+    io:format("support:ping() = ~p~n",[rpc:call(KubeNode,support,ping,[],2*1000)]),
+    SlaveId="slave",
+    Cookie=atom_to_list(rpc:call(KubeNode,erlang,get_cookie,[],5*1000)),
+    Args="-setcookie "++Cookie,
+ %   io:format("start slave = ~p~n",[rpc:call(node(),misc_oam,start_slave,[SlaveId,Args],2*1000)]),
+    io:format("start slave = ~p~n",[rpc:call(KubeNode,support,start_slave,[SlaveId],3*1000)]),
+    pod:unload(KubeNode,"orginal",OrginalPodSpec),
+    io:format("support:ping() = ~p~n",[rpc:call(KubeNode,support,ping,[],2*1000)]),
+    cluster:delete("test_1"),
+    cluster:delete("test_10"),
+    ok.
     
 %% --------------------------------------------------------------------
 %% Function:start/0 
