@@ -8,9 +8,8 @@ all:
 	rm -rf *_specs *_config *.log;
 	rm -rf support etcd pod_specs controller cluster_config host_config;
 	echo Done
-doc_gen:
-	echo glurk not implemented
-
+del_logs:
+	rm -rf logs
 exec_test:
 	rm -rf ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
 	rm -rf  *~ */*~  erl_cra*;
@@ -20,6 +19,8 @@ exec_test:
 #	support
 	rm -rf support;
 	erlc -I ../interfaces -o ebin ../support/src/*.erl;
+#	kube_logger
+	erlc -I ../interfaces -o ebin ../kube_logger/src/*.erl;
 #	iaas
 	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
 #	node
@@ -49,6 +50,8 @@ unit_test:
 #	support
 	rm -rf support;
 	erlc -I ../interfaces -o ebin ../support/src/*.erl;
+#	kube_logger
+	erlc -I ../interfaces -o ebin ../kube_logger/src/*.erl;
 #	iaas
 	erlc -I ../interfaces -o ebin ../iaas/src/*.erl;
 #	node

@@ -153,6 +153,7 @@ ping()->
 
 
 init([]) ->
+    {ok,_}=kube_logger:start(),
     application:set_env([{kubelet,[{cluster_id,glurk}]}]),
     ok=application:start(kubelet),
     {ok,_}=iaas:start(),

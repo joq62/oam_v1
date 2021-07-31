@@ -1,0 +1,47 @@
+{{2021,7,31},
+ {8,46,13},
+ 'test_oam@joq62-X550CA',log,"Start init",
+ [kubelet_server]}.
+{{2021,7,31},
+ {8,46,15},
+ 'test_oam@joq62-X550CA',log,"Successful starting of server",
+ [kubelet_server]}.
+{{2021,7,31},{8,46,15},'test_oam@joq62-X550CA',log,"Start init",[iaas_server]}.
+{{2021,7,31},
+ {8,46,19},
+ 'test_oam@joq62-X550CA',log,"Running Hosts ",
+ [[{running,"c0_lgh","c0","192.168.0.200",22},
+   {running,"asus_lgh","joq62-X550CA","192.168.0.100",22}]]}.
+{{2021,7,31},
+ {8,46,19},
+ 'test_oam@joq62-X550CA',log,"Missing Hosts ",
+ [[{missing,"c2_lgh","c2","192.168.0.202",22},
+   {missing,"c1_lgh","c1","192.168.0.201",22},
+   {missing,"asus_varmdo","joq62-X550CA","192.168.1.50",22},
+   {missing,"c2_varmdo","c2","192.168.1.202",22},
+   {missing,"c0_varmdo","c0","192.168.1.200",22},
+   {missing,"c1_varmdo","c1","192.168.1.201",22}]]}.
+{{2021,7,31},
+ {8,46,37},
+ 'test_oam@joq62-X550CA',ticket,"Failed to start",
+ ["joq62-X550CA",'test_10_kubelet_asus_varmdo@joq62-X550CA',"192.168.1.50",22,
+  {error,ehostunreach}]}.
+{{2021,7,31},
+ {8,46,37},
+ 'test_oam@joq62-X550CA',ticket,"Failed to start",
+ ["c1",test_10_kubelet_c1_varmdo@c1,"192.168.1.201",22,{error,ehostunreach}]}.
+{{2021,7,31},
+ {8,46,44},
+ 'test_oam@joq62-X550CA',ticket,"Failed to start",
+ ["c1",test_1_kubelet_c1_varmdo@c1,"192.168.1.201",22,{error,ehostunreach}]}.
+{{2021,7,31},{8,46,44},'test_oam@joq62-X550CA',log,"Running Clusters ",[[]]}.
+{{2021,7,31},
+ {8,46,44},
+ 'test_oam@joq62-X550CA',log,"Missing Clusters ",
+ [[{"test_10",
+    ['test_10_kubelet_asus_varmdo@joq62-X550CA',test_10_kubelet_c1_varmdo@c1]},
+   {"test_1",[test_1_kubelet_c1_varmdo@c1]}]]}.
+{{2021,7,31},
+ {8,46,44},
+ 'test_oam@joq62-X550CA',log,"Successful starting of server",
+ [iaas_server]}.
