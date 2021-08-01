@@ -101,7 +101,6 @@ ping()->
 %
 %% --------------------------------------------------------------------
 init([]) ->
-    
     % Testcases
     Result=[{rpc:call(node(),M,F,A,T),M,F,A}||{M,F,A,T}<-?TestSuit],
     case [{R,M,F,A}||{R,M,F,A}<-Result,

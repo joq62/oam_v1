@@ -33,9 +33,9 @@ start()->
     ok=setup(),
     io:format("~p~n",[{"Stop setup",?MODULE,?FUNCTION_NAME,?LINE}]),
 
-    io:format("~p~n",[{"Start kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=kubelet(),
-    io:format("~p~n",[{"Stop kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
+ %   io:format("~p~n",[{"Start kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
+ %   ok=kubelet(),
+  %  io:format("~p~n",[{"Stop kubelet()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
   %  io:format("~p~n",[{"Start iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
   %  ok=iaas_cluster(0),
@@ -69,7 +69,7 @@ start()->
    
       %% End application tests
     io:format("~p~n",[{"Start cleanup",?MODULE,?FUNCTION_NAME,?LINE}]),
-    ok=cleanup(),
+  %  ok=cleanup(),
     io:format("~p~n",[{"Stop cleaup",?MODULE,?FUNCTION_NAME,?LINE}]),
    
     io:format("------>"++atom_to_list(?MODULE)++" ENDED SUCCESSFUL ---------"),

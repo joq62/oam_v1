@@ -3,7 +3,7 @@
 %%% @doc: : 
 %%% Create Controller per cluster, the Controller ceates the cluster 
 %%% Check health per cluster
-%%% Delete a cluster
+%%% Delete a cluste
 %%% Add + remove hosts per cluster  
 %%% Install Cluster
 %%% Install cluster
@@ -20,7 +20,7 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
- 
+-include("kube_logger.hrl").
 %% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
@@ -47,6 +47,11 @@
 
 % OaM related
 % Admin
+-export([
+	 apps/0,
+	 cl/0,
+	 hs/0
+	]).
 -export([
 	 install/1,
 	 status_all_clusters/0
@@ -97,7 +102,13 @@ boot()->
 start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 stop()-> gen_server:call(?MODULE, {stop},infinity).
 
+cl()->
+    oam:status_all_clusters().
+hs()->
+    oam:status_all_hosts().
 
+apps()->
+    gen_server:call(?MODULE, {apps},infinity).  
 %%  Admin 
 install(ClusterId)->
     gen_server:call(?MODULE, {install,ClusterId},infinity).    
@@ -153,9 +164,22 @@ ping()->
 
 
 init([]) ->
-    {ok,_}=kube_logger:start(),
-    application:set_env([{kubelet,[{cluster_id,glurk}]}]),
+    {ok,HostId}=inet:gethostname(),
+ %   MonitorNode=list_to_atom("monitor@"++HostId),
+%    pong=net_adm:ping(MonitorNode),
+    MonitorNode=node(),
+  %  application:set_env([{oam,[{cluster_id,glurk}]}]),
+  %  application:set_env([{oam,[{monitor_node,MonitorNode}]}]),
+    
+   
+    {ok,MonId}=application:get_env(monitor_node),
+    {ok,HostId}=inet:gethostname(),
+    MonitorNode=list_to_atom(atom_to_list(MonId)++"@"++HostId),
+    {ok,ClId}=application:get_env(cluster_id),
+    application:set_env([{kubelet,[{cluster_id,ClId}]}]),
+    application:set_env([{kubelet,[{monitor_node,MonitorNode}]}]),
     ok=application:start(kubelet),
+    ?PrintLog(log,"started",[?MODULE]),
     {ok,_}=iaas:start(),
     
     {ok, #state{}}.
@@ -171,6 +195,11 @@ init([]) ->
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
 
+
+handle_call({apps},_From,State) ->
+    Nodes=[node()|nodes()],
+    Reply=[{Node,rpc:call(Node,application,which_applications,[],5*1000)}||Node<-Nodes],
+    {reply, Reply, State};
 
 handle_call({install,ClusterId},_From,State) ->
     Reply=rpc:call(node(),oam_lib,install,[ClusterId],25*1000),
