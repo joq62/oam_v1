@@ -45,10 +45,11 @@ exec_test:
 	    -sname test_exec_oam\
 	    -run oam boot
 test_10_unit_test:
-	rm -rf test_10_ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
+	rm -rf test_10_ebin;
+	rm -rf src/*.beam *.beam test_src/*.beam test_ebin;
 	rm -rf  *~ */*~  erl_cra*;
 	rm -rf *_specs *_config *.log;
-	mkdir test_10_ebin test_1_ebin monitor_ebin;
+	mkdir test_10_ebin;
 #	interface
 	erlc -I ../interfaces -o test_10_ebin ../interfaces/*.erl;
 #	support
@@ -77,10 +78,11 @@ test_10_unit_test:
 	    -oam cluster_id test_10\
 	    -run unit_test start_test test_src/test.config
 test_1_unit_test:
+	rm -rf test_1_ebin;
 	rm -rf test_1_ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
 	rm -rf  *~ */*~  erl_cra*;
 	rm -rf *_specs *_config *.log;
-	mkdir test_10_ebin test_1_ebin monitor_ebin;
+	mkdir test_1_ebin;
 #	interface
 	erlc -I ../interfaces -o test_1_ebin ../interfaces/*.erl;
 #	support
