@@ -76,7 +76,8 @@ test_10_unit_test:
 	    -sname oam_test_10\
 	    -oam monitor_node oam_test_10\
 	    -oam cluster_id test_10\
-	    -run unit_test start_test test_src/test.config
+	    -run oam boot
+#	    -run unit_test start_test test_src/test.config
 test_1_unit_test:
 	rm -rf test_1_ebin;
 	rm -rf test_1_ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
@@ -109,4 +110,5 @@ test_1_unit_test:
 	    -sname oam_test_1\
 	    -oam monitor_node oam_test_1\
 	    -oam cluster_id test_1\
-	    -run unit_test start_test test_src/test.config
+	    -run oam boot
+#	    -run unit_test start_test test_src/test.config
