@@ -1,17 +1,6 @@
 %%% -------------------------------------------------------------------
 %%% @author  : Joq Erlang
 %%% @doc: : 
-%%% Create Controller per cluster, the Controller ceates the cluster 
-%%% Check health per cluster
-%%% Delete a cluste
-%%% Add + remove hosts per cluster  
-%%% Install Cluster
-%%% Install cluster
-%%% Data-{HostId,Ip,SshPort,Uid,Pwd}
-%%% available_hosts()-> [{HostId,Ip,SshPort,Uid,Pwd},..]
-%%% install_leader_host({HostId,Ip,SshPort,Uid,Pwd})->ok|{error,Err}
-%%% cluster_status()->[{running,WorkingNodes},{not_running,NotRunningNodes}]
-
 %%% Created : 
 %%% -------------------------------------------------------------------
 -module(oam).  
@@ -164,44 +153,38 @@ ping()->
 
 init([]) ->
     %% Start logger
+    application:set_env(kubelet,monitor_node,node()),
+    {ok,_}=monitor:start(),
     {ok,_}=kube_logger:start(),
     ?PrintLog(log,"started logger",[?FUNCTION_NAME,?MODULE,?LINE]),
-    %Error mitigation glurk
-
-  %  erlang:set_cookie(node(),abc),
-
-    % 1. Start mnesia and init cluster and hosts and deployment info
+    ?PrintLog(log,"1/10 Start mnesia and init cluster and hosts and deployment info",[?FUNCTION_NAME,?MODULE,?LINE]),
     ok=controller_lib:init_dbase(),
-    % 2. load mensia with pod specs and 
+    % 2. load mensia with pod specs 
+    ?PrintLog(log,"2/10  load mensia with pod specs",[?FUNCTION_NAME,?MODULE,?LINE]),
     ok=kubelet_lib:init_dbase(),
-    % 3. Create start Node
+						% 3. Create start Node
     {ok,ClusterIdAtom}=application:get_env(cluster_id),
     ClusterId=atom_to_list(ClusterIdAtom),
-    io:format("ClusterIdAtom = ~p~n",[{ClusterIdAtom}]),
-    io:format("ClusterId = ~p~n",[{ClusterId}]),
     {ok,StartHostIdAtom}=application:get_env(start_host_id),
     StartHostId=atom_to_list(StartHostIdAtom),
-   
-    %{ok,MonitorNode}=application:get_env(monitor_node),
-    %io:format("MonitorNode = ~p~n",[{MonitorNode}]),
-
+    ?PrintLog(log,"3/10 Environment variables",["clusterId= "++ClusterId,
+					       "start host = "++StartHostId,?FUNCTION_NAME,?MODULE,?LINE]),
+    
+    ?PrintLog(log,"4/10 Start/re-start cluster",[ClusterId,?FUNCTION_NAME,?MODULE,?LINE]),
     ssh:start(),
     ClusterDelete=cluster:delete(ClusterId),
-    io:format("ClusterDelete = ~p~n",[ClusterDelete]),
+    ?PrintLog(log,"5/10 ClusterDelete = ",[ClusterDelete,?FUNCTION_NAME,?MODULE,?LINE]),
     ClusterCreate=cluster:create(ClusterId),
-    io:format("ClusterCreate = ~p~n",[ClusterCreate]),
+    ?PrintLog(log,"6/10 ClusterCreate = ",[ClusterCreate,?FUNCTION_NAME,?MODULE,?LINE]),
 
-    % load_start cluster app? test with balcony
     ClusterStatus=cluster:status_clusters(ClusterId),
-    io:format("ClusterStatus = ~p~n",[ClusterStatus]),
+    ?PrintLog(log,"7/10 ClusterStatus = ",[ClusterStatus,?FUNCTION_NAME,?MODULE,?LINE]),
     {{running,[{ClusterId,RunningNodes}]},
       _}=ClusterStatus,
-    io:format("RunningNodes = ~p~n",[RunningNodes]),
-    [{"c1_varmdo",Test_1_Node}]=RunningNodes,
-   % glurk=rpc:call(Test_1_Node,erlang,get_cookie,[],2000),
-    
+    [{_Alias,Test_1_Node}]=RunningNodes,
     if
 	RunningNodes==[]->
+	    ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
 	    erlang:exit('RunningNodes==[]');
 	true->
 	    ok
@@ -210,11 +193,13 @@ init([]) ->
     [PodInfo]=db_pod_spec:read(ControllerApp),
     {_PodId,_PodVsn,_AppId,_AppVsn,
       _GitPath,_,HostAliasList}=PodInfo,
+    ?PrintLog(log,"8/10 Controller Apps PodInfo = ",[ControllerApp,PodInfo,?FUNCTION_NAME,?MODULE,?LINE]),
     KubeletNode=case HostAliasList of
 		    []->
 			[Info|_]=RunningNodes,
 			if
 			    Info==[]->
+				?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
 				erlang:exit('{_Alias,Node}==[]');
 			    true->
 				{_Alias,Node}=Info,
@@ -227,28 +212,8 @@ init([]) ->
 		end,
     MonitorNode=node(),    
     PodStartResult=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo),
-    io:format("PodStartResult = ~p~n",[PodStartResult]),
-    [PodInfo1]=db_pod_spec:read("balcony"),
-    PodStartResult1=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo1),
-    io:format("PodStartResult1 = ~p~n",[PodStartResult1]),
-
- %   {ok,HostId}=inet:gethostname(),
- %   MonitorNode=list_to_atom("monitor@"++HostId),
-%    pong=net_adm:ping(MonitorNode),
-
-  %  application:set_env([{oam,[{cluster_id,glurk}]}]),
-  %  application:set_env([{oam,[{monitor_node,MonitorNode}]}]),
-    
-   
-   % {ok,MonId}=application:get_env(monitor_node),
-  %  {ok,HostId}=inet:gethostname(),
-  %  MonitorNode=list_to_atom(atom_to_list(MonId)++"@"++HostId),
-
-   % application:set_env([{kubelet,[{cluster_id,ClId}]}]),
-   % application:set_env([{kubelet,[{monitor_node,MonitorNode}]}]),
-   % ok=application:start(kubelet),
-    ?PrintLog(log,"started",[?MODULE]),
-   % {ok,_}=iaas:start(),
+    ?PrintLog(log,"9/10 PodStartResult = ",[PodStartResult,KubeletNode,ClusterId,MonitorNode,PodInfo,?FUNCTION_NAME,?MODULE,?LINE]),
+    ?PrintLog(log,"10/10 started",[?MODULE]),
     
     {ok, #state{}}.
     
