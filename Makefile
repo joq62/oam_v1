@@ -30,9 +30,13 @@ test_10_unit_test:
 	cp ../applications/kubelet/src/*.app test_10_ebin;
 	erlc -I ../interfaces -o test_10_ebin ../node/src/*.erl;
 	erlc -I ../interfaces -o test_10_ebin ../applications/kubelet/src/*.erl;
+#	etcd
+	cp ../applications/etcd/src/*.app test_10_ebin;
+	erlc -I ../interfaces -o test_10_ebin ../kube_dbase/src/*.erl;
+	erlc -I ../interfaces -o test_10_ebin ../applications/etcd/src/*.erl;
 #	controller
 	rm -rf controller;
-	erlc -I ../interfaces -o test_10_ebin ../controller/src/*.erl;
+	erlc -I ../interfaces -o test_10_ebin ../kube_controller/src/*.erl;
 #	oam
 	cp src/oam.app test_10_ebin;
 	erlc -I ../interfaces -o test_10_ebin src/*.erl;
@@ -65,9 +69,12 @@ test_1_unit_test:
 	cp ../applications/kubelet/src/*.app test_1_ebin;
 	erlc -I ../interfaces -o test_1_ebin ../node/src/*.erl;
 	erlc -I ../interfaces -o test_1_ebin ../applications/kubelet/src/*.erl;
+#	etcd
+	cp ../applications/etcd/src/*.app test_1_ebin;
+	erlc -I ../interfaces -o test_1_ebin ../kube_dbase/src/*.erl;	
+	erlc -I ../interfaces -o test_1_ebin ../applications/etcd/src/*.erl;
 #	controller
-	rm -rf controller;
-	erlc -I ../interfaces -o test_1_ebin ../controller/src/*.erl;
+	erlc -I ../interfaces -o test_1_ebin ../kube_controller/src/*.erl;
 #	oam
 	cp src/oam.app test_1_ebin;
 	erlc -I ../interfaces -o test_1_ebin src/*.erl;

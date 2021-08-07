@@ -163,10 +163,10 @@ init([]) ->
     {ok,_}=kube_logger:start(),
     ?PrintLog(log,"started logger",[?FUNCTION_NAME,?MODULE,?LINE]),
     % 2. load mensia with pod specs 
-    ?PrintLog(log,"1/10  Start etcd ",[?FUNCTION_NAME,?MODULE,?LINE]),
-    ok=application:start(etcd),
-   % ?PrintLog(log,"2/10 ",[?FUNCTION_NAME,?MODULE,?LINE]),
-   
+    ?PrintLog(log,"1/10  Start mnesia  and load mensia with pod specs",[?FUNCTION_NAME,?MODULE,?LINE]),
+    ok=kubelet_lib:init_dbase(),
+    ?PrintLog(log,"2/10 load cluster and hosts and deployment info",[?FUNCTION_NAME,?MODULE,?LINE]),
+    ok=iaas_lib:init_dbase(),
     % 3. Create start Node
     {ok,ClusterIdAtom}=application:get_env(cluster_id),
     ClusterId=atom_to_list(ClusterIdAtom),
@@ -182,27 +182,63 @@ init([]) ->
     ClusterCreate=cluster:create(ClusterId),
     ?PrintLog(log,"6/10 ClusterCreate = ",[ClusterCreate,?FUNCTION_NAME,?MODULE,?LINE]),
 
-    ?PrintLog(debug,"6.5 /10 sd:all() = ",[sd:all(),?FUNCTION_NAME,?MODULE,?LINE]),
-
     ClusterStatus=cluster:status_clusters(ClusterId),
     ?PrintLog(log,"7/10 ClusterStatus = ",[ClusterStatus,?FUNCTION_NAME,?MODULE,?LINE]),
     {{running,[{ClusterId,RunningNodes}]},_}=ClusterStatus,
-
-    ?PrintLog(log,"8/10 Start app  = ",["etcd",?FUNCTION_NAME,?MODULE,?LINE]),
-    StartPodEtcd=kubelet_lib:start_app("etcd",ClusterId,node(),"c1_varmdo"),
-    ?PrintLog(log,"8/10 Result Start etcd  = ",[StartPodEtcd,?FUNCTION_NAME,?MODULE,?LINE]),
-
-
-    ?PrintLog(log,"8.5/10 Start app  = ",["kubelet",?FUNCTION_NAME,?MODULE,?LINE]),
-    StartPodKubelet=kubelet_lib:start_app("kubelet",ClusterId,node(),"c1_varmdo"),
-    ?PrintLog(log,"8.5/10 Result Start kubelet  = ",[StartPodKubelet,?FUNCTION_NAME,?MODULE,?LINE]),
-
-    ?PrintLog(log,"9/10 Start app  = ",["controller",?FUNCTION_NAME,?MODULE,?LINE]),
-    StartPodController=kubelet_lib:start_app("controller",ClusterId,node(),"c1_varmdo"),
-    ?PrintLog(log,"9/10 Result Start controller  = ",[StartPodController,?FUNCTION_NAME,?MODULE,?LINE]),
+    case RunningNodes of
+	[]->
+	    ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+	    erlang:exit('RunningNodes==[]');
+	_->
+	    ControllerApp="controller",
+	    [PodInfo]=db_pod_spec:read(ControllerApp),
+	    {_PodId,_PodVsn,_AppId,_AppVsn,
+	     _GitPath,_,HostAliasList}=PodInfo,
+	    ?PrintLog(log,"8/10 Controller Apps PodInfo = ",[ControllerApp,PodInfo,?FUNCTION_NAME,?MODULE,?LINE]),
+	    case HostAliasList of
+		[]->
+		    case sd:get(kubelet) of
+			[]->
+			    ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+			    erlang:exit('Node==[]');		
+			[KubeletNode|_T]->
+			    % true==lists:member(KubeletNode,HostAliasList)],
+			    MonitorNode=node(),    
+			    PodStartResult=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo),
+			    ?PrintLog(log,"9/10 PodStartResult = ",[PodStartResult,KubeletNode,ClusterId,MonitorNode,PodInfo,?FUNCTION_NAME,?MODULE,?LINE]),
+			    ok
+		    end;
+		HostAliasList->
+		    KList=sd:get(kubelet),
+		    case check_alias(KList,HostAliasList,[]) of
+			[]->
+			    ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+			    erlang:exit('Node==[]');
+			[KubeletNode|_T]->
+			    % true==lists:member(KubeletNode,HostAliasList)],
+			    MonitorNode=node(),    
+			    PodStartResult=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo),
+			    ?PrintLog(log,"9/10 PodStartResult = ",[PodStartResult,KubeletNode,ClusterId,MonitorNode,PodInfo,?FUNCTION_NAME,?MODULE,?LINE]),
+			    ok	
+		    end
+	    end
+    end,
     ?PrintLog(log,"10/10 started",[?MODULE]),
     
     {ok, #state{}}.
+   
+check_alias([],_HostAliasList,KubeletNodes)->
+    KubeletNodes;
+check_alias([Node|T],HostAliasList,Acc)->
+    {ok,HostId}=rpc:call(Node,inet,gethostname,[],2*1000),
+    io:format("HostId,HostAliasList ~p~n",[{HostId,HostAliasList,?FUNCTION_NAME,?MODULE,?LINE}]),
+    NewAcc=case lists:keymember(HostId,2,HostAliasList) of
+	       true->
+		   [Node|Acc];
+	       false ->
+		   Acc
+	   end,
+    check_alias(T,HostAliasList,NewAcc).
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
 %% Description: Handling call messages
@@ -215,7 +251,42 @@ init([]) ->
 %% --------------------------------------------------------------------
 
 handle_call({start_app,AppId,ClusterId},_From,State) ->
-    Reply=kubelet_lib:start_app("controller",ClusterId),
+    ClusterStatus=cluster:status_clusters(ClusterId),
+    {{running,[{ClusterId,RunningNodes}]},_}=ClusterStatus,
+    Reply=case RunningNodes of
+	      []->
+		  ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+		  erlang:exit('RunningNodes==[]');
+	      _->
+		  [PodInfo]=db_pod_spec:read(AppId),
+		  {_PodId,_PodVsn,_AppId,_AppVsn,
+		   _GitPath,_,HostAliasList}=PodInfo,
+		  case HostAliasList of
+		      []->
+			  case sd:get(kubelet) of
+			      []->
+				  ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+				  {error,[ticket,"No running nodes = ",sd:get(kubelet),?FUNCTION_NAME,?MODULE,?LINE]};
+			      [KubeletNode|_T]->
+				  MonitorNode=node(),    
+				  PodStartResult=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo),
+				  PodStartResult
+			  end;
+		      HostAliasList->
+			  KList=sd:get(kubelet),
+			  case check_alias(KList,HostAliasList,[]) of
+			      []->
+				  ?PrintLog(ticket,"No running nodes = ",['RunningNodes==[]',?FUNCTION_NAME,?MODULE,?LINE]),
+				  {error,[ticket,"No running nodes = ",sd:get(kubelet),?FUNCTION_NAME,?MODULE,?LINE]};
+			      [KubeletNode|_T]->
+						% true==lists:member(KubeletNode,HostAliasList)],
+				  MonitorNode=node(),    
+				  PodStartResult=pod:load_start(KubeletNode,ClusterId,MonitorNode,PodInfo),
+				  PodStartResult	
+			  end
+		  end
+	  end,
+    
     {reply, Reply, State};
 
 
