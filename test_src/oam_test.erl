@@ -82,196 +82,53 @@ start()->
 %% Returns: non
 %% --------------------------------------------------------------------
 
-kubelet()->
-   % io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-   % io:format("host info= ~p~n",[db_host_info:read_all()]),
-   % io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-    
-    application:set_env([{kubelet,[{cluster_id,glurk}]}]),
-    application:start(kubelet),
-    {ok,_}=iaas:start(),
-    {{running,RunningClusters},{missing,_}}=iaas:status_all_clusters(),    
-   % ?PrintLog(debug,"running clusters",[RunningClusters]),
-    Result=[start_kube(ClusterId,Nodes,"kubelet")||{ClusterId,Nodes}<-RunningClusters],
-    ?PrintLog(debug,"start result",[Result]),
-    ok.
-   
-start_kube(ClusterId,Nodes,PodId)->
-    start_kube(ClusterId,Nodes,PodId,[]).
-
-start_kube(_ClusterId,[],_PodId,StartResult)->
-    StartResult;
-start_kube(ClusterId,[Node|T],PodId,Acc)->
-    NewAcc=[rpc:call(Node,kubelet,ping,[],2*1000)|Acc],
-  %  ?PrintLog(debug,"start kube",[Node,ClusterId,NewAcc]),
-    start_kube(ClusterId,T,PodId,NewAcc).
-    
-    
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-
-iaas_cluster(N)->
-   % io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-   % io:format("host info= ~p~n",[db_host_info:read_all()]),
-   % io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-
-
-    [KubeNode|T]=nodes(),
-    io:format("Nodes = ~p~n",[nodes()]),
-    io:format("KubeNode = ~p~n",[KubeNode]),
-    [OrginalPodSpec]=db_pod_spec:read("orginal"),
-    io:format("Orginal pod = ~p~n",[OrginalPodSpec]),
-    ok=pod:load(KubeNode,"orginal",OrginalPodSpec),
-    io:format("support:ping() = ~p~n",[rpc:call(KubeNode,support,ping,[],2*1000)]),
-    SlaveId="slave",
-    Cookie=atom_to_list(rpc:call(KubeNode,erlang,get_cookie,[],5*1000)),
-    Args="-setcookie "++Cookie,
- %   io:format("start slave = ~p~n",[rpc:call(node(),misc_oam,start_slave,[SlaveId,Args],2*1000)]),
-    io:format("start slave = ~p~n",[rpc:call(KubeNode,support,start_slave,[SlaveId],3*1000)]),
-    pod:unload(KubeNode,"orginal",OrginalPodSpec),
-    io:format("support:ping() = ~p~n",[rpc:call(KubeNode,support,ping,[],2*1000)]),
-    cluster:delete("test_1"),
-    cluster:delete("test_10"),
-    ok.
-    
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-pass_0()->
-    
-%    io:format("cluster info= ~p~n",[db_cluster_info:read_all()]),
-%    io:format("host info= ~p~n",[db_host_info:read_all()]),
-%    io:format("pod info= ~p~n",[db_pod_spec:read_all()]),
-
-  %  io:format("delete(production) = ~p~n",[cluster:delete("production")]),
- %   io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
-  %  io:format("delete(test_10) = ~p~n",[cluster:delete("test_10")]),
-  %  io:format("delete(error_10) = ~p~n",[cluster:delete("error_10")]),  
-    cluster:delete("production"),
-    cluster:delete("test_1"),
-    cluster:delete("test_10"),
-    cluster:delete("error_10"),    
-    timer:sleep(3000),
-    {{running,R1},{missing,M1}}=cluster:status_clusters(),
-  %  io:format("1. status_clusters() = ~p~n",[  {{running,R1},{missing,M1}}]),    
-    ?PrintLog(log,"1. status_clusters()",[{running,R1},{missing,M1}]),
-    [cluster:create(ClusterId)||ClusterId<-M1],
- %   [io:format("create = ~p~n",[{ClusterId,cluster:create(ClusterId)}])||{ClusterId,_}<-M1],  
-  
- %   io:format("create(test_2) = ~p~n",[cluster:create("test_2")]),
-    timer:sleep(1000),
-    {{running,R2},{missing,M2}}=cluster:status_clusters(),
-  %
-    ?PrintLog(log,"2. status_clusters()",[{running,R2},{missing,M2}]),
-%  io:format("2. status_clusters() = ~p~n",[  {{running,R2},{missing,M2}}]),    
-%    io:format("2. status_clusters() = ~p~n",[cluster:status_clusters()]),    
-    [cluster:delete(ClusterId)||ClusterId<-R2],
-    timer:sleep(3000),
-    ?PrintLog(log,"3. status_clusters()",[cluster:status_clusters()]),
- %   io:format("3. status_clusters() = ~p~n",[cluster:status_clusters()]), 
-
-    timer:sleep(2000),
-    ok.
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_1()->
-  %  io:format("update_host_status= ~p~n",[iaas:update_host_status()]),
-%    io:format("status_all_hosts= ~p~n",[iaas:status_all_hosts()]),
- %   io:format("running_hosts= ~p~n",[iaas:running_hosts()]),
- %   io:format("not_available_hosts()= ~p~n",[iaas:not_available_hosts()]),
- 
-    io:format("1 status_clusters() = ~p~n",[cluster:status_clusters()]),   
-    io:format("create test_1= ~p~n",[{"test_1",cluster:create("test_1")}]), 
-    io:format("2 status_clusters() = ~p~n",[cluster:status_clusters()]),   
-    io:format("delete(test_1) = ~p~n",[cluster:delete("test_1")]),
-    io:format("3 status_clusters() = ~p~n",[cluster:status_clusters()]), 
-    ok.
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_2()->
-    
-    io:format("production_kubelet_c0@c0 ~p~n",[rpc:call('production_kubelet_c0@c0',init,stop,[])]),
-    timer:sleep(1000),
-    io:format("production_kubelet_c1@c1 ~p~n",[rpc:call('production_kubelet_c1@c1',init,stop,[])]),
-    timer:sleep(1000),
-     io:format("test_1_kubelet_c0@c0 ~p~n",[rpc:call('test_1_kubelet_c0@c0',init,stop,[])]),
-    {error,[{error,[eexists,glurk]}]}=iaas:create_cluster(glurk),
-    
-    %
-    WantedClusterIds=iaas:wanted_clusters(),
-    io:format("WantedClusterIds ~p~n",[WantedClusterIds]),
-    RunningClusters=iaas:running_clusters(),
-    ClusterToCreate=[ClusterId||ClusterId<-iaas:wanted_clusters(),
-				false==lists:keymember(ClusterId,1,iaas:running_clusters())],
-    io:format("ClusterToCreate ~p~n",[ClusterToCreate]),
- %   [Id1,Id2]=ClusterToCreate,
-  %  ok=iaas:create_cluster(Id1),
-  %  timer:sleep(1000),
-  %   io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
-  %  [Id2]=[XClusterId||XClusterId<-iaas:wanted_clusters(),
-%	    false==lists:keymember(XClusterId,1,iaas:running_clusters())],
- %   io:format("Id2 ~p~n",[Id2]),
-  %  ok=iaas:create_cluster(Id2),
-  %  []=[ClusterId||ClusterId<-iaas:wanted_clusters(),
-%		   false==lists:keymember(ClusterId,1,iaas:running_clusters())],
-  %  {{running_clusters,RunningClusters},
-  %  {not_available_clusters,[]}}=iaas:status_all_clusters(),
-    
-  %  RunningClusters=iaas:running_clusters(),
-     
-    
-  
-
-    ok.
+%pass_0()->
+%    ok.
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_3()->
-    
-    check(3),
-    ok.
 
-check(0)->
-    ok;
-check(N) ->
-    io:format("iaas:running_clusters() ~p~n",[iaas:running_clusters()]),
-    timer:sleep(3000),
-    check(N-1).
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-pass_4()->
-  
-    ok.
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pass_5()->
-  
-    ok.
 
 
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+
+
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
 
 
 %% --------------------------------------------------------------------
@@ -297,10 +154,10 @@ setup()->
 %% Returns: non
 %% -------------------------------------------------------------------    
 
-cleanup()->
+%cleanup()->
   
 %    application:stop(oam),
-    ok.
+%    ok.
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc

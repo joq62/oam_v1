@@ -37,36 +37,9 @@
 % OaM related
 % Admin
 -export([
-	 start_app/2,
-	 apps/0,
 	 cl/0,
 	 hs/0
 	]).
--export([
-	 install/1,
-	 status_all_clusters/0
-	]).
-
-
--export([
-	 status_hosts/0,
-	 cluster_info/0,
-	 host_info/0,
-	 catalog_info/0
-	]).
-
-% Operate
--export([
-	 create_cluster/1,
-	 create_cluster/4,
-	 
-	 status_cluster/1
-	]).
-
--export([
-       
-	]).
-
 
 -export([start/0,
 	 stop/0,
@@ -92,42 +65,14 @@ start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 stop()-> gen_server:call(?MODULE, {stop},infinity).
 
 
-start_app(AppId,CliusterId)->
-    gen_server:call(?MODULE, {start_app,AppId,CliusterId},infinity).
-
 cl()->
     oam:status_all_clusters().
 hs()->
     oam:status_all_hosts().
 
-apps()->
-    gen_server:call(?MODULE, {apps},infinity).  
 %%  Admin 
-install(ClusterId)->
-    gen_server:call(?MODULE, {install,ClusterId},infinity).    
-
-status_hosts()->
-    gen_server:call(?MODULE, {status_hosts},infinity).
-cluster_info()->
-    gen_server:call(?MODULE, {cluster_info},infinity).   
-host_info()->
-    gen_server:call(?MODULE, {host_info},infinity).  
-catalog_info()->
-    gen_server:call(?MODULE, {catalog_info},infinity).  
 
 %%---------------------------------------------------------------
-
-create_cluster(ClusterName,NumControllers,Hosts,Cookie)->
-    gen_server:call(?MODULE, {create_cluster,ClusterName,Cookie,Hosts,NumControllers},infinity).
-create_cluster(ClusterId)->
-    gen_server:call(?MODULE, {create_cluster,ClusterId},infinity).
-delete_cluster(ClusterId)->
-    gen_server:call(?MODULE, {delete,ClusterId},infinity).
-status_all_clusters()->    
-    gen_server:call(?MODULE, {status_all_clusters},infinity).
-status_cluster(ClusterId)->
-    gen_server:call(?MODULE, {status_cluster,ClusterId},infinity).
-    
 
 
 
@@ -186,8 +131,6 @@ init([]) ->
 
     ClusterStatus=cluster:status_clusters(ClusterId),
     ?PrintLog(log,"7/10 ClusterStatus = ",[ClusterStatus,?FUNCTION_NAME,?MODULE,?LINE]),
-    {{running,[{ClusterId,RunningNodes}]},_}=ClusterStatus,
-
     ?PrintLog(log,"8/10 Start app  = ",["etcd",?FUNCTION_NAME,?MODULE,?LINE]),
     StartPodEtcd=kubelet_lib:start_app("etcd",ClusterId,node(),"c1_varmdo"),
     ?PrintLog(log,"8/10 Result Start etcd  = ",[StartPodEtcd,?FUNCTION_NAME,?MODULE,?LINE]),
@@ -213,41 +156,6 @@ init([]) ->
 %%          {stop, Reason, Reply, State}   | (terminate/2 is called)
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
-
-handle_call({start_app,AppId,ClusterId},_From,State) ->
-    Reply=kubelet_lib:start_app("controller",ClusterId),
-    {reply, Reply, State};
-
-
-handle_call({apps},_From,State) ->
-    Nodes=[node()|nodes()],
-    Reply=[{Node,rpc:call(Node,application,which_applications,[],5*1000)}||Node<-Nodes],
-    {reply, Reply, State};
-
-handle_call({install,ClusterId},_From,State) ->
-    Reply=rpc:call(node(),oam_lib,install,[ClusterId],25*1000),
-    {reply, Reply, State};
-
-handle_call({cluster_info},_From,State) ->
-    Reply=etcd:cluster_info(),
-    {reply, Reply, State};
-
-handle_call({host_info},_From,State) ->
-    Reply=etcd:host_info(),
-    {reply, Reply, State};
-
-handle_call({catalog_info},_From,State) ->
-    Reply=etcd:catalog_info(),
-    {reply, Reply, State};
-
-
-handle_call({status_hosts},_From,State) ->
-    Reply=host_controller:status_hosts(),
-    {reply, Reply, State};
-
-handle_call({create_cluster,ClusterName},_From,State) ->
-    Reply=rpc:call(node(),oam_cluster,create,[ClusterName]),
-    {reply, Reply, State};
 
 handle_call({ping},_From,State) ->
     Reply={pong,node(),?MODULE},
