@@ -22,8 +22,9 @@
 %% ====================================================================
 connect(ClusterId)->
     Cookie=db_cluster_info:cookie(ClusterId),
-    ControllerHost=db_cluster_info:controller(ClusterId),
+    [{_Alias,ControllerHost}]=db_cluster_info:controller(ClusterId),
     ControllerNode=list_to_atom(ControllerHost++"_"++ClusterId++"@"++ControllerHost),
+    true=erlang:set_cookie(ControllerNode,list_to_atom(Cookie)),
     true=erlang:set_cookie(node(),list_to_atom(Cookie)),
     Reply=case net_adm:ping(ControllerNode) of
 	      pong->
