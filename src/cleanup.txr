@@ -1,35 +1,4 @@
-../node/src/monitor_server.erl:157: Warning: function nice/1 is unused
-../node/src/monitor_server.erl:170: Warning: the result of the expression is ignored (suppress the warning by assigning the expression to the _ variable)
-../node/src/monitor_server.erl:170: Warning: variable 'Msg' is unused
-../node/src/pod.erl:49: Warning: variable 'SetEnvResult' is unused
-../node/src/pod.erl:93: Warning: function load_start/2 is unused
-../node/src/pod.erl:111: Warning: function stop_unload/2 is unused
-../node/src/pod.erl:124: Warning: function load/3 is unused
-../node/src/pod.erl:154: Warning: function unload/3 is unused
-../node/src/pod.erl:167: Warning: function delete/2 is unused
-../node/src/pod.erl:178: Warning: function create/1 is unused
-../node/src/pod.erl:214: Warning: function delete/3 is unused
-../node/src/pod.erl:219: Warning: function create/2 is unused
-../node/src/pod.erl:256: Warning: function node/1 is unused
-../node/src/pod.erl:264: Warning: function vmid_hostid/1 is unused
-erlc -I ../interfaces -o test_1_ebin ../applications/kubelet/src/*.erl;
-cp ../applications/etcd/src/*.app test_1_ebin;
-erlc -I ../interfaces -o test_1_ebin ../kube_dbase/src/*.erl;	
-../kube_dbase/src/db_cluster_info.erl:3: Warning: export_all flag enabled - all functions will be exported
-../kube_dbase/src/db_host_info.erl:3: Warning: export_all flag enabled - all functions will be exported
-../kube_dbase/src/db_pod_spec.erl:3: Warning: export_all flag enabled - all functions will be exported
-erlc -I ../interfaces -o test_1_ebin ../applications/etcd/src/*.erl;
-erlc -I ../interfaces -o test_1_ebin ../kube_controller/src/*.erl;
-../kube_controller/src/controller.erl:139: Warning: variable 'ClusterStatus' is unused
-../kube_controller/src/controller.erl:139: Warning: variable 'HostsStatus' is unused
-cp src/oam.app test_1_ebin;
-erlc -I ../interfaces -o test_1_ebin src/*.erl;
-src/cli.erl:18: Warning: export_all flag enabled - all functions will be exported
-src/oam.erl:124: Warning: function delete_cluster/1 is unused
-src/oam.erl:189: Warning: variable 'RunningNodes' is unused
-src/oam.erl:217: Warning: variable 'AppId' is unused
-mkdir test_ebin;
-cp test_src/*.app test_ebin;
+p test_src/*.app test_ebin;
 erlc -I ../interfaces -o test_ebin test_src/*.erl;
 test_src/oam_test.erl:85: Warning: function kubelet/0 is unused
 test_src/oam_test.erl:99: Warning: function start_kube/3 is unused

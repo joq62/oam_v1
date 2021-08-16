@@ -37,9 +37,6 @@
 % OaM related
 % Admin
 -export([
-	 new/1,
-	 delete/1,
-	 connect/1,
 	 cl/0,
 	 hs/0
 	]).
@@ -80,13 +77,6 @@ hs()->
 
 
 %%---------------------------------------------------------------
-new(ClusterId)->
-    gen_server:call(?MODULE, {new,ClusterId},infinity).
-delete(ClusterId)->
-    gen_server:call(?MODULE, {delete,ClusterId},infinity).
-connect(ClusterId)->
-    gen_server:call(?MODULE, {connect,ClusterId},infinity).
-
 
 ping()-> 
     gen_server:call(?MODULE, {ping},infinity).
@@ -114,18 +104,85 @@ ping()->
 init([]) ->
     %% Start logger
     application:set_env(kubelet,monitor_node,node()),
-    file:make_dir("logs"),
-    application:set_env(kubelet,cluster_id,logs),
-    application:start(kubelet),
- %   {ok,_}=monitor:start(),
- %   {ok,_}=kube_logger:start(),
+    {ok,_}=monitor:start(),
+    {ok,_}=kube_logger:start(),
     ?PrintLog(log,"started logger",[?FUNCTION_NAME,?MODULE,?LINE]),
-    ?PrintLog(log,"Starting",[?FUNCTION_NAME,?MODULE,?LINE]),
-    application:start(etcd),
-    ?PrintLog(log,"Successful started",[?FUNCTION_NAME,?MODULE,?LINE]),
+    % 2. load mensia with pod specs 
+    ?PrintLog(log,"1/10  Start etcd ",[?FUNCTION_NAME,?MODULE,?LINE]),
+    ok=application:start(etcd),
+   % ?PrintLog(log,"2/10 ",[?FUNCTION_NAME,?MODULE,?LINE]),
+   
+    % 3. Create start Node
+    {ok,ClusterIdAtom}=application:get_env(cluster_id),
+    ClusterId=atom_to_list(ClusterIdAtom),
+    {ok,StartHostIdAtom}=application:get_env(start_host_id),
+    StartHostId=atom_to_list(StartHostIdAtom),
+    ?PrintLog(log,"3/10 Environment variables",["clusterId= "++ClusterId,
+					       "start host = "++StartHostId,?FUNCTION_NAME,?MODULE,?LINE]),
+    
+    ?PrintLog(log,"4/10 Start/re-start cluster",[ClusterId,?FUNCTION_NAME,?MODULE,?LINE]),
+    ssh:start(),
+    ClusterDelete=cluster:delete(ClusterId),
+    ?PrintLog(log,"5/10 ClusterDelete = ",[ClusterDelete,?FUNCTION_NAME,?MODULE,?LINE]),
+    ClusterCreate=cluster:create(ClusterId),
+    ?PrintLog(log,"6/10 ClusterCreate = ",[ClusterCreate,?FUNCTION_NAME,?MODULE,?LINE]),
+
+    ?PrintLog(debug,"6.5 /10 sd:all() = ",[sd:all(),?FUNCTION_NAME,?MODULE,?LINE]),
+
+    ClusterStatus=cluster:status_clusters(ClusterId),
+    ?PrintLog(log,"7/10 ClusterStatus = ",[ClusterStatus,?FUNCTION_NAME,?MODULE,?LINE]),
+
+    %%%% Test slave concept
+    ?PrintLog(log,"7/10 nodes = ",[node(),nodes(),?FUNCTION_NAME,?MODULE,?LINE]),
+    
+    %% Sleave is a Pod that can carrie any application 
+    HostNodes=nodes(),
+    L1=[{Node,rpc:call(Node,inet,gethostname,[],2*1000)}||Node<-nodes()],
+    HostNodeHostIdList=[{Node,HostId}||{Node,{ok,HostId}}<-L1],
+    ?PrintLog(debug,"HostNodeHostIdList ",[HostNodeHostIdList,?FUNCTION_NAME,?MODULE,?LINE]),
+
+    %Args="-sname "++HostId_ClusterId_slave_N++" "++"-setcookie "++Cookie
+    SlaveNodeNamesArgs=lists:append([iaas_lib:slave_arg(HostId,ClusterId,Node)||{Node,HostId}<-HostNodeHostIdList]),
+    
+    SlaveStartResult=[iaas_lib:slave_start(HostId,Node,ClusterId,NodeName,Arg)||{HostId,Node,ClusterId,NodeName,Arg}<-SlaveNodeNamesArgs],
+    
+    ?PrintLog(debug,"SlaveStartResult ",[SlaveStartResult,?FUNCTION_NAME,?MODULE,?LINE]),
+    
+    ?PrintLog(debug,"Nodes again ",[nodes(),?FUNCTION_NAME,?MODULE,?LINE]),
+
+
+  %  ?PrintLog(log,"8/10 Start app  = ",["etcd",?FUNCTION_NAME,?MODULE,?LINE]),
+  %  StartPodEtcd=kubelet_lib:start_app("etcd",ClusterId,node(),"c1_varmdo"),
+  %  ?PrintLog(log,"8/10 Result Start etcd  = ",[StartPodEtcd,?FUNCTION_NAME,?MODULE,?LINE]),
+
+  %  ?PrintLog(log,"8.5/10 Start app  = ",["iaas",?FUNCTION_NAME,?MODULE,?LINE]),
+  %  StartPodIaas=kubelet_lib:start_app("iaas",ClusterId,node(),"c1_varmdo"),
+  %  ?PrintLog(log,"8.5/10 Result Start iaas  = ",[StartPodIaas,?FUNCTION_NAME,?MODULE,?LINE]),
+
+  %  ?PrintLog(log,"8.5/10 Start app  = ",["kubelet",?FUNCTION_NAME,?MODULE,?LINE]),
+  %  StartPodKubelet=kubelet_lib:start_app("kubelet",ClusterId,node(),"c1_varmdo"),
+  %  ?PrintLog(log,"8.5/10 Result Start kubelet  = ",[StartPodKubelet,?FUNCTION_NAME,?MODULE,?LINE]),
+
+  %  ?PrintLog(log,"9/10 Start app  = ",["controller",?FUNCTION_NAME,?MODULE,?LINE]),
+  %  StartPodController=kubelet_lib:start_app("controller",ClusterId,node(),"c1_varmdo"),
+  %  ?PrintLog(log,"9/10 Result Start controller  = ",[StartPodController,?FUNCTION_NAME,?MODULE,?LINE]),
+    ?PrintLog(log,"10/10 started",[?MODULE]),
     
     {ok, #state{}}.
-   
+
+slave_start({HostId,Node,NodeName,Arg})->
+    {ok,SlaveNode}=rpc:call(Node,slave,start,[HostId,NodeName,Arg],5*1000),
+    pong=net_adm:ping(SlaveNode),
+     {ok,SlaveNode}.
+
+slave_arg(0,_HostId,_ClusterId,_Node,SlaveNames)->
+    SlaveNames;
+slave_arg(N,HostId,ClusterId,Node,Acc)->
+    Cookie=atom_to_list(rpc:call(Node,erlang,get_cookie,[],2*1000)),
+    NStr=integer_to_list(N),
+    NodeName=HostId++"_"++ClusterId++"_"++"slave"++NStr,
+    Arg="-setcookie "++Cookie,
+   slave_arg(N-1,HostId,ClusterId,Node,[{HostId,Node,NodeName,Arg}|Acc]).
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
 %% Description: Handling call messages
@@ -136,17 +193,6 @@ init([]) ->
 %%          {stop, Reason, Reply, State}   | (terminate/2 is called)
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
-
-handle_call({new,ClusterId},_From,State) ->
-    Reply=rpc:call(node(),oam_lib,new,[ClusterId],10*10*1000),
-    {reply, Reply, State};
-handle_call({delete,ClusterId},_From,State) ->
-    Reply=rpc:call(node(),oam_lib,delete,[ClusterId],10*1000),
-    {reply, Reply, State};
-handle_call({connect,ClusterId},_From,State) ->
-    Reply=rpc:call(node(),oam_lib,connect,[ClusterId],10*1000),
-    {reply, Reply, State};
-
 
 handle_call({ping},_From,State) ->
     Reply={pong,node(),?MODULE},

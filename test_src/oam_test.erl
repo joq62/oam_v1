@@ -41,9 +41,9 @@ start()->
   %  ok=iaas_cluster(0),
   %  io:format("~p~n",[{"Stop iaas_cluster()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
- %   io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
- %   ok=pass_0(),
- %  io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    io:format("~p~n",[{"Start pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=pass_0(),
+   io:format("~p~n",[{"Stop pass_0()",?MODULE,?FUNCTION_NAME,?LINE}]),
 
 %    io:format("~p~n",[{"Start pass_1()",?MODULE,?FUNCTION_NAME,?LINE}]),
 %    ok=pass_1(),
@@ -68,14 +68,26 @@ start()->
     
    
       %% End application tests
-    io:format("~p~n",[{"Start cleanup",?MODULE,?FUNCTION_NAME,?LINE}]),
-  %  ok=cleanup(),
-    io:format("~p~n",[{"Stop cleaup",?MODULE,?FUNCTION_NAME,?LINE}]),
+   % io:format("~p~n",[{"Start cleanup",?MODULE,?FUNCTION_NAME,?LINE}]),
+   % ok=cleanup(),
+   % io:format("~p~n",[{"Stop cleaup",?MODULE,?FUNCTION_NAME,?LINE}]),
    
     io:format("------>"++atom_to_list(?MODULE)++" ENDED SUCCESSFUL ---------"),
     ok.
 
 
+
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+pass_0()->
+    {ok,Ref}=oam:new("lgh"),
+    
+    
+    ok.
+
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
@@ -88,14 +100,6 @@ start()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-%pass_0()->
-%    ok.
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
@@ -154,10 +158,10 @@ setup()->
 %% Returns: non
 %% -------------------------------------------------------------------    
 
-%cleanup()->
-  
-%    application:stop(oam),
-%    ok.
+cleanup()->
+    
+    
+    ok.
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc

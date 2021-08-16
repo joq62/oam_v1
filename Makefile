@@ -23,9 +23,11 @@ test_10_unit_test:
 	erlc -I ../interfaces -o test_10_ebin ../interfaces/*.erl;
 #	support
 	rm -rf support;
-	erlc -I ../interfaces -o test_10_ebin ../support/src/*.erl;
+	erlc -I ../interfaces -o test_10_ebin ../kube_support/src/*.erl;
 #	iaas
-	erlc -I ../interfaces -o test_10_ebin ../iaas/src/*.erl;
+	cp ../applications/iaas/src/*.app test_10_ebin;
+	erlc -I ../interfaces -o test_10_ebin ../kube_iaas/src/*.erl;
+	erlc -I ../interfaces -o test_10_ebin ../applications/iaas/src/*.erl;
 #	node
 	cp ../applications/kubelet/src/*.app test_10_ebin;
 	erlc -I ../interfaces -o test_10_ebin ../node/src/*.erl;
@@ -50,8 +52,7 @@ test_10_unit_test:
 	    -oam monitor_node oam_test_10\
 	    -oam cluster_id test_10\
 	    -oam start_host_id c1_varmdo\
-	    -run oam boot
-#	    -run unit_test start_test test_src/test.config
+	    -run unit_test start_test test_src/test.config
 test_1_unit_test:
 	rm -rf test_1_ebin;
 	rm -rf test_1_ebin/* src/*.beam *.beam test_src/*.beam test_ebin;
@@ -62,9 +63,11 @@ test_1_unit_test:
 	erlc -I ../interfaces -o test_1_ebin ../interfaces/*.erl;
 #	support
 	rm -rf support;
-	erlc -I ../interfaces -o test_1_ebin ../support/src/*.erl;
+	erlc -I ../interfaces -o test_1_ebin ../kube_support/src/*.erl;
 #	iaas
-	erlc -I ../interfaces -o test_1_ebin ../iaas/src/*.erl;
+	cp ../applications/iaas/src/*.app test_1_ebin;
+	erlc -I ../interfaces -o test_1_ebin ../kube_iaas/src/*.erl;
+	erlc -I ../interfaces -o test_1_ebin ../applications/iaas/src/*.erl;
 #	node
 	cp ../applications/kubelet/src/*.app test_1_ebin;
 	erlc -I ../interfaces -o test_1_ebin ../node/src/*.erl;
@@ -88,5 +91,34 @@ test_1_unit_test:
 	    -oam monitor_node oam_test_1\
 	    -oam cluster_id test_1\
 	    -oam start_host_id c1_varmdo\
-	    -run oam boot
-#	    -run unit_test start_test test_src/test.config
+	    -run unit_test start_test test_src/test.config
+unit_test:
+	rm -rf test_ebin;
+	rm -rf test_ebin/* src/*.beam *.beam test_src/*.beam;
+	rm -rf  *~ */*~  erl_cra*;
+	rm -rf *_specs *_config logs;
+	mkdir test_ebin;
+#	interface
+	erlc -I ../interfaces -o ebin ../interfaces/*.erl;
+#	support
+	erlc -I ../interfaces -o ebin ../kube_support/src/*.erl;
+#	kubelet
+	cp ../applications/kubelet/src/*.app ebin;
+	erlc -I ../interfaces -o ebin ../node/src/*.erl;
+	erlc -I ../interfaces -o ebin ../applications/kubelet/src/*.erl;
+#	etcd
+	cp ../applications/etcd/src/*.app ebin;
+	erlc -I ../interfaces -o ebin ../kube_dbase/src/*.erl;	
+	erlc -I ../interfaces -o ebin ../applications/etcd/src/*.erl;
+#	iaas
+	erlc -I ../interfaces -o ebin ../kube_iaas/src/*.erl;
+#	oam
+	erlc -I ../interfaces -o ebin ../oam/src/*.erl;
+#	test application
+	cp test_src/*.app test_ebin;
+	erlc -I ../interfaces -o test_ebin test_src/*.erl;
+	erl -pa ebin -pa test_ebin\
+	    -setcookie oam_cookie\
+	    -sname oam_test\
+	    -oam monitor_node oam_test\
+	    -run unit_test start_test test_src/test.config

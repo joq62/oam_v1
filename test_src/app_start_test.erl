@@ -11,7 +11,7 @@
 %% --------------------------------------------------------------------
 -include_lib("eunit/include/eunit.hrl").
 %% --------------------------------------------------------------------
--define(APP,oam).
+
 %% External exports
 -export([start/0]).
 
@@ -49,6 +49,8 @@ start()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
+
+-define(APP,oam).
 setup()->
 
     %% Test env vars 
@@ -58,8 +60,7 @@ setup()->
     % Start a Service application 
     rpc:call(node(),application,stop,[?APP],10*5000),
     ok=rpc:call(node(),application,start,[?APP],10*5000),
-    {pong,_,?APP}=rpc:call(node(),?APP,ping,[],1*5000),	
-%    {pong,_,iaas_server}=iaas:ping(),
+    {pong,_,?APP}=rpc:call(node(),?APP,ping,[],1*5000),
     	 
 
     ok.
