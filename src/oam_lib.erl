@@ -52,36 +52,49 @@ delete(ClusterId)->
 %% Returns: non
 %% --------------------------------------------------------------------
 new(ClusterId)->
-    ?PrintLog(log,"1/4 Start new cluster",[ClusterId,?FUNCTION_NAME,?MODULE,?LINE]),
+
+    ?PrintLog(log,"1/X Check if needed hosts are available  ",[?FUNCTION_NAME,?MODULE,?LINE]),
+    % Check if needed hosts are available 
+    {ok,RunningHosts,_MissingHosts}=host:status_all_hosts(),
+    RunningHostIds=[{Alias,HostId}||{running,Alias,HostId,_,_}<-RunningHosts],
+    ControllerHostInfo=db_cluster_info:controller(ClusterId),
+    WorkerHostsInfo=db_cluster_info:workers(ClusterId),
+    NeededHosts=lists:append([ControllerHostInfo,WorkerHostsInfo]),
+   
+    NeededHostsCheck=[HostInfo||HostInfo<-NeededHosts,
+			   lists:member(HostInfo,RunningHostIds)],
+    if
+	NeededHostsCheck==NeededHosts->
+	    ?PrintLog(log,"1/X Needed hosts are available",[NeededHosts,?FUNCTION_NAME,?MODULE,?LINE]);
+	true ->
+	    ?PrintLog(ticket,"1/X Needed hosts are not available",[NeededHostsCheck,NeededHosts,?FUNCTION_NAME,?MODULE,?LINE]),
+	    erlang:exit({ticket,"1/X Needed hosts are not available",[NeededHostsCheck,NeededHosts,?FUNCTION_NAME,?MODULE,?LINE]})
+    end,
     
+    ?PrintLog(log,"2/X Ensure that oam has the same cookie as cluster ",[?FUNCTION_NAME,?MODULE,?LINE]),	    
     Cookie=db_cluster_info:cookie(ClusterId),
     [{_Alias,ControllerHost}]=db_cluster_info:controller(ClusterId),
     ControllerNode=list_to_atom(ControllerHost++"_"++ClusterId++"@"++ControllerHost),
     true=erlang:set_cookie(ControllerNode,list_to_atom(Cookie)),
     true=erlang:set_cookie(node(),list_to_atom(Cookie)),
     
-    ssh:start(),
+    ?PrintLog(log,"3/X Ensure that the cluster is not running ",[cluster:delete(ClusterId),?FUNCTION_NAME,?MODULE,?LINE]),	    
     
-    ClusterDelete=cluster:delete(ClusterId),
-    ?PrintLog(log,"2/4 ClusterDelete = ",[ClusterDelete,?FUNCTION_NAME,?MODULE,?LINE]),
-    
-    {ClusterId,StartResult}=cluster:create(ClusterId),
-    ?PrintLog(log,"3/4 ClusterCreate = ",[ClusterId,StartResult,?FUNCTION_NAME,?MODULE,?LINE]),
-    ClusterStatus=cluster:status_clusters(ClusterId),
-    ?PrintLog(log,"3/4 ClusterStatus = ",[ClusterStatus,?FUNCTION_NAME,?MODULE,?LINE]),
-    ?PrintLog(debug,"db_cluster:read_all() = ",[db_cluster:read_all(),?FUNCTION_NAME,?MODULE,?LINE]),
-    
+    ?PrintLog(log,"4/X Create cluster nodes ",[cluster:create(ClusterId),?FUNCTION_NAME,?MODULE,?LINE]),
+        
     Reply=case cluster:status_clusters(ClusterId) of
-	      {{running,Running},{missing,[]}}->
-		  
-		 % ControllerHost=db_cluster_info:controller(ClusterId),
-		%  {ok,Reference}=pod:create(ControllerHost,controller),
+	      {{running,RunningNodes},{missing,[]}}->
+
+		  ?PrintLog(log,"5/X Success ClusterCreate = ",[RunningNodes,?FUNCTION_NAME,?MODULE,?LINE]),
 		  {ok,Reference}=pod:create(ControllerHost),
 		  {ok,[_]}=pod:load_start("support",Reference),
 		  {ok,[_]}=pod:load_start("etcd",Reference),
+		  % Init etcd
+		  
+		  erlang:exit({debug,Reference}),
 		  {ok,[_]}=pod:load_start("iaas",Reference),
 		  {ok,[_]}=pod:load_start("controller",Reference),
-		  ?PrintLog(log,"4/4 Created = ",["support","etcd","iaas","controller",?FUNCTION_NAME,?MODULE,?LINE]),
+		  ?PrintLog(log,"6/X  = ",["support","etcd","iaas","controller",?FUNCTION_NAME,?MODULE,?LINE]),
 		  {ok,Reference};
 	      Err->
 		  ?PrintLog(alert,"Failed to created ",[ClusterId,?FUNCTION_NAME,?MODULE,?LINE]),

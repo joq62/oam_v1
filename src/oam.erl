@@ -112,6 +112,8 @@ ping()->
 
 
 init([]) ->
+    %% Ensure that ssh are started
+    ssh:start(),   
     %% Start logger
     application:set_env(kubelet,monitor_node,node()),
     file:make_dir("logs"),
